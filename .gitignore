@@ -1,0 +1,27 @@
+# Build artifacts
+build/
+bin/
+cmake-build-debug/
+.cache/
+*.obj
+*.so
+*.dll
+*.dylib
+*.a
+*.lib
+
+# Editor directories
+.idea/
+*.swp
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Backup files
+*.bak
+*.tmp
