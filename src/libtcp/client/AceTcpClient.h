@@ -1,0 +1,21 @@
+#pragma once
+
+#include "AceTcpServerSession.h"
+
+#include "libtcp/client/ITcpClient.h"
+
+#include <ace/SOCK_Connector.h>
+
+class AceTcpClient final : public tcp::ITcpClient {
+public:
+    ~AceTcpClient() noexcept override;
+
+    std::shared_ptr<tcp::ITcpSession> connect(const Endpoint& local, const Endpoint& remote) override;
+    void disconnect() override;
+
+private:
+    ACE_SOCK_Connector connector_;
+    std::shared_ptr<AceTcpServerSession> session_;
+
+    EndpointPair endpoint_pair_;
+};
