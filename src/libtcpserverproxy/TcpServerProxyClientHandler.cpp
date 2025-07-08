@@ -55,9 +55,9 @@ ConstBuffer TcpServerProxyClientHandler::read_from_tcp_client(const std::shared_
     IOResult result = tcp_session->read(tcp_buf.view(), block);
     
     if (result.code != IOResultCode::Success) {
-        printf("TcpServerProxyClientHandler: %s failed to read from %s\n",
-               tcp_client.to_string().c_str(), tcp_client.to_string().c_str());
-        throw std::runtime_error("Failed to read from TCP client");
+        std::string msg = "TcpServerProxyClientHandler: " + tcp_client.to_string() + " failed to read from " + tcp_client.to_string() + ": " + result.error_message;
+        printf("%s\n", msg.c_str());
+        throw std::runtime_error("Failed to read from TCP client: " + result.error_message);
     }
     
     return tcp_buf.view(result.count);
@@ -65,9 +65,9 @@ ConstBuffer TcpServerProxyClientHandler::read_from_tcp_client(const std::shared_
 
 void TcpServerProxyClientHandler::send_to_udp_proxy(ConstBuffer data, const Endpoint& tcp_client) {
     if (!udp_client_.send_to(udp_proxy_, data)) {
-        printf("TcpServerProxyClientHandler: %s failed to send to UDP proxy at %s\n",
-               tcp_client.to_string().c_str(), udp_proxy_.to_string().c_str());
-        throw std::runtime_error("Failed to send to UDP proxy");
+        std::string msg = "TcpServerProxyClientHandler: " + tcp_client.to_string() + " failed to send to UDP proxy at " + udp_proxy_.to_string();
+        printf("%s\n", msg.c_str());
+        throw std::runtime_error("Failed to send to UDP proxy: unknown error");
     }
 }
 
@@ -77,9 +77,9 @@ ConstBuffer TcpServerProxyClientHandler::receive_from_udp_proxy(const Endpoint& 
     auto received = udp_client_.receive_from(udp_buf.view(), sender);
     
     if (received == -1) {
-        printf("TcpServerProxyClientHandler: %s failed to receive from UDP proxy at %s\n",
-               tcp_client.to_string().c_str(), udp_proxy_.to_string().c_str());
-        throw std::runtime_error("Failed to receive from UDP proxy");
+        std::string msg = "TcpServerProxyClientHandler: " + tcp_client.to_string() + " failed to receive from UDP proxy at " + udp_proxy_.to_string();
+        printf("%s\n", msg.c_str());
+        throw std::runtime_error("Failed to receive from UDP proxy: unknown error");
     }
     
     return udp_buf.view(received);
@@ -91,9 +91,9 @@ void TcpServerProxyClientHandler::send_response_to_tcp_client(
     IOResult result = tcp_session->write(response, block);
     
     if (result.code != IOResultCode::Success) {
-        printf("TcpServerProxyClientHandler: %s failed to send response to %s\n",
-               tcp_client.to_string().c_str(), tcp_client.to_string().c_str());
-        throw std::runtime_error("Failed to send response to TCP client");
+        std::string msg = "TcpServerProxyClientHandler: " + tcp_client.to_string() + " failed to send response to " + tcp_client.to_string() + ": " + result.error_message;
+        printf("%s\n", msg.c_str());
+        throw std::runtime_error("Failed to send response to TCP client: " + result.error_message);
     }
 }
 
