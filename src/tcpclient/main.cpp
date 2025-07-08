@@ -28,7 +28,7 @@ int main() {
 
     if (IOResult result = session->write(ConstBuffer(message.data(), message.size()), block);
         result.code != IOResultCode::Success || result.count != message.size()) {
-        std::cerr << "Failed to send message" << std::endl;
+        std::cerr << "Failed to send message: " << result.error_message << std::endl;
         return 1;
     }
 
@@ -37,7 +37,7 @@ int main() {
 
     const auto result = session->read(buffer_in.view(), block);
     if (result.code != IOResultCode::Success) {
-        std::cerr << "Failed to receive response" << std::endl;
+        std::cerr << "Failed to receive response: " << result.error_message << std::endl;
         return 1;
     }
     std::string response(buffer_in.view().data, result.count);

@@ -16,6 +16,7 @@ std::unique_ptr<ITask> TcpEchoHandler::handle_client(std::unique_ptr<tcp::ITcpSe
 
             auto read_result = shared_session->read(buffer_in.view(), std::chrono::milliseconds(200));
             if (read_result.code != IOResultCode::Success) {
+                printf("TcpEchoHandler: failed to read: %s\n", read_result.error_message.c_str());
                 break;
             }
 
@@ -28,6 +29,7 @@ std::unique_ptr<ITask> TcpEchoHandler::handle_client(std::unique_ptr<tcp::ITcpSe
 
             auto write_result = shared_session->write(buffer_out, std::chrono::milliseconds(200));
             if (write_result.code != IOResultCode::Success) {
+                printf("TcpEchoHandler: failed to write: %s\n", write_result.error_message.c_str());
                 break;
             }
         }

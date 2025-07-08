@@ -21,6 +21,11 @@ std::unique_ptr<ITask> UdpEchoHandler::handle_client(udp::IUdpSession& client_se
             received_msg.c_str(),
             echo_msg.c_str(),
             sender.to_string().c_str());
+        if (write_result.code != IOResultCode::Success) {
+            printf("UdpEchoHandler: failed to write: %s\n", write_result.error_message.c_str());
+        }
+    } else {
+        printf("UdpEchoHandler: failed to read: %s\n", result.error_message.c_str());
     }
     return std::make_unique<CompletedTask>();
 } 
