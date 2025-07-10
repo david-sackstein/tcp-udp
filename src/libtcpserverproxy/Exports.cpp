@@ -3,8 +3,6 @@
 #include <background/BackgroundRunner.h>
 #include <libacetools/ACEInitializer.h>
 #include <libtcpserverproxy/Exports.h>
-#include "background/BackgroundServer.h"
-
 
 namespace server_proxy {
     static std::vector<std::string> ip_addresses = ACEInitializer::init();

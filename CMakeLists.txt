@@ -4,12 +4,8 @@ project(tcp_udp_project LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(CMAKE_SYSTEM_NAME Linux)
-set(CMAKE_SHARED_LIBRARY_SUFFIX ".so")
-
 add_compile_options(
-        -Wall -Wextra -Werror -g -O0 -Wno-deprecated-declarations -fvisibility=hidden -Wno-error=attributes
-
+        -Wall -Wextra -Werror -g -O0 -Wno-deprecated-declarations -fvisibility=hidden
 )
 
 # Include and link directories (adjust if needed)

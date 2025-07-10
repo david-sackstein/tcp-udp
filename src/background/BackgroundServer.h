@@ -5,7 +5,6 @@
 
 #include <thread>
 #include <memory>
-#include <utility>
 
 class BackgroundServer : public IBackgroundServer {
 public:

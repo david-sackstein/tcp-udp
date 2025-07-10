@@ -3,6 +3,7 @@
 #include "BackgroundServer.h"
 
 #include <future>
+#include <functional>
 
 inline std::unique_ptr<IBackgroundServer> startServer(
     std::function<std::unique_ptr<IBlockingServer>()> factory,

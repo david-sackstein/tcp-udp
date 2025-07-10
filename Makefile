@@ -3,8 +3,7 @@
 # ================================
 # Project Metadata and Toolchain
 CXX := g++
-CXXFLAGS := -std=c++17 -Wall -Wextra -Werror -g -O0 -Wno-deprecated-declarations -fvisibility=hidden -fPIC -MMD -MP -Wno-error=attributes
-
+CXXFLAGS := -std=c++17 -Wall -Wextra -Werror -g -O0 -Wno-deprecated-declarations -fvisibility=hidden -fPIC -MMD -MP
 LDFLAGS := -L/opt/homebrew/lib
 
 # Output directories

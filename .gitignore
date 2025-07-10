@@ -9,6 +9,7 @@ cmake-build-debug/
 *.dylib
 *.a
 *.lib
+*.log
 
 # Editor directories
 .idea/

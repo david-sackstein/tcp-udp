@@ -1,13 +1,13 @@
 #pragma once
 
-#include <memory>
-
 #include <common/Exported.h>
 
 #include <libacetools/ISignalRegistration.h>
 #include <libacetools/ISocketIO.h>
 
 #include <ace/Reactor.h>
+
+#include <memory>
 
 EXPORTED ISocketIO& get_socket_io();
 
