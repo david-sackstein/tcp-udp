@@ -3,6 +3,8 @@
 #include <background/BackgroundRunner.h>
 #include <libacetools/ACEInitializer.h>
 #include <libtcpclientproxy/Exports.h>
+#include "background/BackgroundServer.h"
+
 
 namespace client_proxy {
 

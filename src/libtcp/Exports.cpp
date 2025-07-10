@@ -6,6 +6,7 @@
 #include <libacetools/ACEInitializer.h>
 
 #include <background/BackgroundRunner.h>
+#include "background/BackgroundServer.h"
 
 namespace tcp {
 
