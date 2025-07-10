@@ -4,6 +4,8 @@
 #include <libtcp/server/ITcpClientHandler.h>
 #include <libudp/client/IUdpClient.h>
 
+#include <functional>
+
 class TcpServerProxyClientHandler : public tcp::ITcpClientHandler {
 public:
     TcpServerProxyClientHandler(
