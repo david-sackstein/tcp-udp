@@ -4,7 +4,7 @@
 #include <common/server/IBlockingServer.h>
 
 #include <thread>
-#include <utility>
+#include <memory>
 
 class BackgroundServer : public IBackgroundServer {
 public:

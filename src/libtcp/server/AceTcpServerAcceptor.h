@@ -35,5 +35,5 @@ private:
     std::vector<std::unique_ptr<ITask>> tasks_;
 
     // This flag is passed by reference to handlers for cancellation
-    [[maybe_unused]] std::atomic<bool> is_cancelled_{false};
+    std::atomic<bool> is_cancelled_{false};
 };
