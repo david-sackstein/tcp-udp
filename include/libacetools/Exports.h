@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include <common/Exported.h>
 
 #include <libacetools/ISignalRegistration.h>
