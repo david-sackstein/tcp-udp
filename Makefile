@@ -1,21 +1,32 @@
-# Top-level Makefile for tcp-udp project
-
-# ================================
-# Project Metadata and Toolchain
-CXX := g++
-CXXFLAGS := -std=c++17 -Wall -Wextra -Werror -g -O0 -Wno-deprecated-declarations -fvisibility=hidden -fPIC -MMD -MP
-LDFLAGS := -L/opt/homebrew/lib
+# Top-level Makefile for tcp-udp project (cross-platform: Linux/macOS)
 
 # Output directories
 BIN_DIR := bin
 LIB_DIR := $(BIN_DIR)
 OBJ_DIR := build
 
-# Include directories
+UNAME_S := $(shell uname -s)
+
+ifeq ($(UNAME_S),Darwin)
+    SO_EXT := dylib
+    ACE_INCLUDE := /opt/homebrew/include
+    ACE_LIBDIR := /opt/homebrew/lib
+    RPATH_FLAG := -Wl,-rpath,$(BIN_DIR)
+else
+    SO_EXT := so
+    ACE_INCLUDE := /usr/local/include
+    ACE_LIBDIR := /usr/local/lib
+    RPATH_FLAG := -Wl,-rpath=$(BIN_DIR)
+endif
+
+CXX := g++
+CXXFLAGS := -std=c++17 -Wall -Wextra -Werror -g -O0 -Wno-deprecated-declarations -fvisibility=hidden -fPIC -MMD -MP
+LDFLAGS += $(RPATH_FLAG) -L$(ACE_LIBDIR)
+
 INCLUDES := \
   -Iinclude \
   -Isrc \
-  -I/opt/homebrew/include
+  -I$(ACE_INCLUDE)
 
 # Libraries
 ACE_LIB := ACE
@@ -35,42 +46,42 @@ $(BIN_DIR) $(OBJ_DIR):
 # libacetools
 LIBACETOOLS_SRCS := $(shell find src/libacetools -name '*.cpp')
 LIBACETOOLS_OBJS := $(patsubst src/%.cpp,$(OBJ_DIR)/%.o,$(LIBACETOOLS_SRCS))
-LIBACETOOLS := $(BIN_DIR)/libacetools.dylib
+LIBACETOOLS := $(BIN_DIR)/libacetools.$(SO_EXT)
 $(LIBACETOOLS): $(LIBACETOOLS_OBJS) | $(BIN_DIR)
 	$(CXX) -shared -o $@ $^ $(LDFLAGS) -l$(ACE_LIB)
 
 # libtcp
 LIBTCP_SRCS := $(shell find src/libtcp -name '*.cpp')
 LIBTCP_OBJS := $(patsubst src/%.cpp,$(OBJ_DIR)/%.o,$(LIBTCP_SRCS))
-LIBTCP := $(BIN_DIR)/libtcp.dylib
+LIBTCP := $(BIN_DIR)/libtcp.$(SO_EXT)
 $(LIBTCP): $(LIBTCP_OBJS) $(LIBACETOOLS) | $(BIN_DIR)
 	$(CXX) -shared -o $@ $^ $(LDFLAGS) -L$(BIN_DIR) -lacetools -l$(ACE_LIB)
 
 # libudp
 LIBUDP_SRCS := $(shell find src/libudp -name '*.cpp')
 LIBUDP_OBJS := $(patsubst src/%.cpp,$(OBJ_DIR)/%.o,$(LIBUDP_SRCS))
-LIBUDP := $(BIN_DIR)/libudp.dylib
+LIBUDP := $(BIN_DIR)/libudp.$(SO_EXT)
 $(LIBUDP): $(LIBUDP_OBJS) $(LIBACETOOLS) | $(BIN_DIR)
 	$(CXX) -shared -o $@ $^ $(LDFLAGS) -L$(BIN_DIR) -lacetools -l$(ACE_LIB)
 
 # libtcpclientproxy
 LIBTCPCLIENTPROXY_SRCS := $(shell find src/libtcpclientproxy -name '*.cpp')
 LIBTCPCLIENTPROXY_OBJS := $(patsubst src/%.cpp,$(OBJ_DIR)/%.o,$(LIBTCPCLIENTPROXY_SRCS))
-LIBTCPCLIENTPROXY := $(BIN_DIR)/libtcpclientproxy.dylib
+LIBTCPCLIENTPROXY := $(BIN_DIR)/libtcpclientproxy.$(SO_EXT)
 $(LIBTCPCLIENTPROXY): $(LIBTCPCLIENTPROXY_OBJS) $(LIBACETOOLS) | $(BIN_DIR)
 	$(CXX) -shared -o $@ $^ $(LDFLAGS) -L$(BIN_DIR) -ltcp -ludp -lacetools -l$(ACE_LIB)
 
 # libtcpserverproxy
 LIBTCPSERVERPROXY_SRCS := $(shell find src/libtcpserverproxy -name '*.cpp')
 LIBTCPSERVERPROXY_OBJS := $(patsubst src/%.cpp,$(OBJ_DIR)/%.o,$(LIBTCPSERVERPROXY_SRCS))
-LIBTCPSERVERPROXY := $(BIN_DIR)/libtcpserverproxy.dylib
+LIBTCPSERVERPROXY := $(BIN_DIR)/libtcpserverproxy.$(SO_EXT)
 $(LIBTCPSERVERPROXY): $(LIBTCPSERVERPROXY_OBJS) $(LIBACETOOLS) | $(BIN_DIR)
 	$(CXX) -shared -o $@ $^ $(LDFLAGS) -L$(BIN_DIR) -ltcp -ludp -lacetools -l$(ACE_LIB)
 
 # libargsparser
 LIBARGSPARSER_SRCS := $(shell find src/libargsparser -name '*.cpp')
 LIBARGSPARSER_OBJS := $(patsubst src/%.cpp,$(OBJ_DIR)/%.o,$(LIBARGSPARSER_SRCS))
-LIBARGSPARSER := $(BIN_DIR)/libargsparser.dylib
+LIBARGSPARSER := $(BIN_DIR)/libargsparser.$(SO_EXT)
 $(LIBARGSPARSER): $(LIBARGSPARSER_OBJS) $(LIBACETOOLS) | $(BIN_DIR)
 	$(CXX) -shared -o $@ $^ $(LDFLAGS) -L$(BIN_DIR) -lacetools
 
@@ -159,4 +170,4 @@ udptest: $(TESTS)
 
 # Clean rule
 clean:
-	rm -rf $(OBJ_DIR) $(BIN_DIR) $(LIB_DIR)
+	rm -rf $(OBJ_DIR) $(BIN_DIR)
