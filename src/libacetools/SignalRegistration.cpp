@@ -6,7 +6,7 @@
 SignalRegistration::SignalRegistration(ACE_Reactor *reactor)
     : reactor_(reactor) {
     if (reactor_) {
-        reactor_->register_handler(SIGINT, this);
+        reactor_->register_handler(SIGINT, this, ACE_Event_Handler::SIGNAL_MASK);
     }
 }
 
