@@ -6,6 +6,7 @@
 #include <libtcpclientproxy/Exports.h>
 #include <libtcp/client/ITcpClient.h>
 #include <string>
+#include <sstream>
 
 static std::chrono::milliseconds block = std::chrono::milliseconds::max();
 
@@ -30,6 +31,48 @@ TEST_F(ProxyChainTest, EndToEnd) {
     std::string expected_response = "echo " + std::string(msg, 5);
     ASSERT_STREQ(buffer.view().data, expected_response.c_str());
 
+    client->disconnect();
+}
+
+TEST_F(ProxyChainTest, StressTest) {
+    auto client = tcp::create_tcp_client();
+
+    std::shared_ptr<tcp::ITcpSession> session = client->connect(
+            Endpoint::loop_back(TCP_CLIENT_PORT),
+            Endpoint::loop_back(TCP_SERVER_PROXY_PORT));
+
+    ASSERT_TRUE(session);
+
+    const int num_requests = 10000;
+    OwnedBuffer buffer(1024);
+
+    for (int i = 1; i <= num_requests; i++) {
+        // Create message with incrementing number
+        std::ostringstream oss;
+        oss << "request_" << i;
+        std::string msg = oss.str();
+        
+        // Send request
+        auto write_result = session->write(ConstBuffer(msg.data(), msg.size()), block);
+        ASSERT_EQ(IOResultCode::Success, write_result.code);
+        ASSERT_EQ(msg.size(), write_result.count);
+
+        // Read response
+        const auto read_result = session->read(buffer.view(), block);
+        ASSERT_EQ(IOResultCode::Success, read_result.code);
+        
+        // Verify response
+        std::string response(buffer.view().data, read_result.count);
+        std::string expected_response = "echo " + msg;
+        ASSERT_EQ(expected_response, response) << "Failed on request " << i;
+        
+        // Progress indicator every 1000 requests
+        if (i % 1000 == 0) {
+            printf("StressTest: Completed %d/%d requests\n", i, num_requests);
+        }
+    }
+
+    printf("StressTest: All %d requests completed successfully\n", num_requests);
     client->disconnect();
 }
 

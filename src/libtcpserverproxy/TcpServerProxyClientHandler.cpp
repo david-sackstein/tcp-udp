@@ -7,7 +7,7 @@
 #include <memory>
 #include <stdexcept>
 
-std::chrono::milliseconds block = std::chrono::milliseconds(200);
+std::chrono::milliseconds block = std::chrono::milliseconds(100);
 
 TcpServerProxyClientHandler::TcpServerProxyClientHandler(
     Endpoint udp_proxy,
@@ -22,35 +22,39 @@ std::unique_ptr<ITask> TcpServerProxyClientHandler::handle_client(std::unique_pt
 std::function<void(std::atomic<bool>&)> TcpServerProxyClientHandler::make_work(const std::shared_ptr<tcp::ITcpSession>& shared_session) {
     return [shared_session, this](std::atomic<bool>& cancelled) {
         try {
-            Endpoint tcp_client = shared_session->get_peer();
-            
-            // Read from TCP client
-            auto received_from_tcp = read_from_tcp_client(shared_session, tcp_client);
-            if (received_from_tcp.size == 0) {
-                // No data received, exit
-                return;
+            while (!cancelled) {
+                Endpoint tcp_client = shared_session->get_peer();
+                
+                // Read from TCP client
+                auto received_from_tcp = read_from_tcp_client(shared_session, tcp_client);
+                if (received_from_tcp.size == 0) {
+                    // No data received, client likely disconnected
+                    printf("TcpServerProxyClientHandler: client disconnected, exiting\n");
+                    break;
+                }
+                
+                check_cancellation(cancelled);
+                
+                // Send to UDP proxy
+                send_to_udp_proxy(received_from_tcp, tcp_client);
+                
+                check_cancellation(cancelled);
+                
+                // Receive from UDP proxy
+                auto response_from_udp = receive_from_udp_proxy(tcp_client);
+                if (response_from_udp.size == 0) {
+                    // No response received, exit
+                    printf("TcpServerProxyClientHandler: no response from UDP proxy, exiting\n");
+                    break;
+                }
+                
+                check_cancellation(cancelled);
+                
+                // Send response to TCP client
+                send_response_to_tcp_client(shared_session, response_from_udp, tcp_client);
+                
+                // Continue to next request-response cycle
             }
-            
-            check_cancellation(cancelled);
-            
-            // Send to UDP proxy
-            send_to_udp_proxy(received_from_tcp, tcp_client);
-            
-            check_cancellation(cancelled);
-            
-            // Receive from UDP proxy
-            auto response_from_udp = receive_from_udp_proxy(tcp_client);
-            if (response_from_udp.size == 0) {
-                // No response received, exit
-                return;
-            }
-            
-            check_cancellation(cancelled);
-            
-            // Send response to TCP client
-            send_response_to_tcp_client(shared_session, response_from_udp, tcp_client);
-            
-            // Exit - request-response cycle complete
         } catch (std::runtime_error& e) {
             printf("TcpServerProxyClientHandler: %s\n", e.what());
             return;
