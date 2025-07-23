@@ -38,7 +38,7 @@ void TcpClientProxyUdpHandler::handle_client(udp::IUdpSession& client_session, s
     check_cancellation(cancelled);
 
     // Find or create the connection to the tcp server
-    BindingPtr binding = get_or_create_binding(source_key);
+    BindingPtr& binding = get_or_create_binding(source_key);
 
     check_cancellation(cancelled);
 
@@ -56,16 +56,16 @@ void TcpClientProxyUdpHandler::handle_client(udp::IUdpSession& client_session, s
     send_response_to_udp(client_session, read_from_tcp, udp_sender);
 }
 
-TcpClientProxyUdpHandler::BindingPtr
+TcpClientProxyUdpHandler::BindingPtr&
 TcpClientProxyUdpHandler::get_or_create_binding(const std::string &source_key) {
     auto it = bindings_.find(source_key);
     if (it != bindings_.end()) {
-        return std::move(it->second);
+        return it->second;
     }
     return create_binding(source_key);
 }
 
-TcpClientProxyUdpHandler::BindingPtr TcpClientProxyUdpHandler::create_binding(const std::string &source_key) {
+TcpClientProxyUdpHandler::BindingPtr& TcpClientProxyUdpHandler::create_binding(const std::string &source_key) {
     auto client = std::unique_ptr<tcp::ITcpClient>(tcp::create_tcp_client());
     auto session = client->connect(local_endpoint_, tcp_server_endpoint_);
     if (!session) {
@@ -73,8 +73,8 @@ TcpClientProxyUdpHandler::BindingPtr TcpClientProxyUdpHandler::create_binding(co
     }
 
     auto binding = std::make_unique<UdpTcpBinding>(UdpTcpBinding{std::move(client), session});
-    bindings_.emplace(source_key, std::move(binding));
-    return std::move(bindings_.at(source_key));
+    auto [it, inserted] = bindings_.emplace(source_key, std::move(binding));
+    return it->second;
 }
 
 ConstBuffer TcpClientProxyUdpHandler::read_udp_message(
