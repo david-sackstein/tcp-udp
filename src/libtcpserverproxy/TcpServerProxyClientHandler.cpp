@@ -22,27 +22,35 @@ std::unique_ptr<ITask> TcpServerProxyClientHandler::handle_client(std::unique_pt
 std::function<void(std::atomic<bool>&)> TcpServerProxyClientHandler::make_work(const std::shared_ptr<tcp::ITcpSession>& shared_session) {
     return [shared_session, this](std::atomic<bool>& cancelled) {
         try {
-            while (!cancelled) {
-                Endpoint tcp_client = shared_session->get_peer();
-                
-                // Read from TCP client
-                ConstBuffer received_from_tcp = read_from_tcp_client(shared_session, tcp_client);
-                
-                check_cancellation(cancelled);
-                
-                // Send to UDP proxy
-                send_to_udp_proxy(received_from_tcp, tcp_client);
-                
-                check_cancellation(cancelled);
-                
-                // Receive from UDP proxy
-                ConstBuffer response_from_udp = receive_from_udp_proxy(tcp_client);
-                
-                check_cancellation(cancelled);
-                
-                // Send response to TCP client
-                send_response_to_tcp_client(shared_session, response_from_udp, tcp_client);
+            Endpoint tcp_client = shared_session->get_peer();
+            
+            // Read from TCP client
+            auto received_from_tcp = read_from_tcp_client(shared_session, tcp_client);
+            if (received_from_tcp.size == 0) {
+                // No data received, exit
+                return;
             }
+            
+            check_cancellation(cancelled);
+            
+            // Send to UDP proxy
+            send_to_udp_proxy(received_from_tcp, tcp_client);
+            
+            check_cancellation(cancelled);
+            
+            // Receive from UDP proxy
+            auto response_from_udp = receive_from_udp_proxy(tcp_client);
+            if (response_from_udp.size == 0) {
+                // No response received, exit
+                return;
+            }
+            
+            check_cancellation(cancelled);
+            
+            // Send response to TCP client
+            send_response_to_tcp_client(shared_session, response_from_udp, tcp_client);
+            
+            // Exit - request-response cycle complete
         } catch (std::runtime_error& e) {
             printf("TcpServerProxyClientHandler: %s\n", e.what());
             return;
@@ -51,16 +59,20 @@ std::function<void(std::atomic<bool>&)> TcpServerProxyClientHandler::make_work(c
 }
 
 ConstBuffer TcpServerProxyClientHandler::read_from_tcp_client(const std::shared_ptr<tcp::ITcpSession>& tcp_session, const Endpoint& tcp_client) {
-    OwnedBuffer tcp_buf(1024);
-    IOResult result = tcp_session->read(tcp_buf.view(), block);
+    IOResult result = tcp_session->read(tcp_buffer_.view(), block);
     
-    if (result.code != IOResultCode::Success) {
+    if (result.code == IOResultCode::Success) {
+        if (result.count > 0) {
+            return tcp_buffer_.view(result.count);
+        } else {
+            // No data received
+            return ConstBuffer(nullptr, 0);
+        }
+    } else {
         std::string msg = "TcpServerProxyClientHandler: " + tcp_client.to_string() + " failed to read from " + tcp_client.to_string() + ": " + result.error_message;
         printf("%s\n", msg.c_str());
         throw std::runtime_error("Failed to read from TCP client: " + result.error_message);
     }
-    
-    return tcp_buf.view(result.count);
 }
 
 void TcpServerProxyClientHandler::send_to_udp_proxy(ConstBuffer data, const Endpoint& tcp_client) {
@@ -72,9 +84,8 @@ void TcpServerProxyClientHandler::send_to_udp_proxy(ConstBuffer data, const Endp
 }
 
 ConstBuffer TcpServerProxyClientHandler::receive_from_udp_proxy(const Endpoint& tcp_client) {
-    OwnedBuffer udp_buf(1024);
     Endpoint sender;
-    auto received = udp_client_.receive_from(udp_buf.view(), sender);
+    auto received = udp_client_.receive_from(udp_buffer_.view(), sender);
     
     if (received == -1) {
         std::string msg = "TcpServerProxyClientHandler: " + tcp_client.to_string() + " failed to receive from UDP proxy at " + udp_proxy_.to_string();
@@ -82,7 +93,7 @@ ConstBuffer TcpServerProxyClientHandler::receive_from_udp_proxy(const Endpoint& 
         throw std::runtime_error("Failed to receive from UDP proxy: unknown error");
     }
     
-    return udp_buf.view(received);
+    return udp_buffer_.view(received);
 }
 
 void TcpServerProxyClientHandler::send_response_to_tcp_client(
