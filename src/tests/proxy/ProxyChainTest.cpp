@@ -1,21 +1,23 @@
 #include "ProxyChainTest.h"
 
 #include <common/OwnedBuffer.h>
+#include <liblogger/Exports.h>
 #include <libtcp/Exports.h>
 #include <libtcpserverproxy/Exports.h>
 #include <libtcpclientproxy/Exports.h>
 #include <libtcp/client/ITcpClient.h>
+
 #include <string>
 #include <sstream>
 
 static std::chrono::milliseconds block = std::chrono::milliseconds::max();
 
 TEST_F(ProxyChainTest, EndToEnd) {
-    auto client = tcp::create_tcp_client();
+    auto client = tcp::create_tcp_client(*logger_);
 
     std::shared_ptr<tcp::ITcpSession> session = client->connect(
-            Endpoint::loop_back(TCP_CLIENT_PORT),
-            Endpoint::loop_back(TCP_SERVER_PROXY_PORT));
+        Endpoint::loop_back(TCP_CLIENT_PORT),
+        Endpoint::loop_back(TCP_SERVER_PROXY_PORT));
 
     ASSERT_TRUE(session);
 
@@ -35,11 +37,11 @@ TEST_F(ProxyChainTest, EndToEnd) {
 }
 
 TEST_F(ProxyChainTest, StressTest) {
-    auto client = tcp::create_tcp_client();
+    auto client = tcp::create_tcp_client(*logger_);
 
     std::shared_ptr<tcp::ITcpSession> session = client->connect(
-            Endpoint::loop_back(TCP_CLIENT_PORT),
-            Endpoint::loop_back(TCP_SERVER_PROXY_PORT));
+        Endpoint::loop_back(TCP_CLIENT_PORT),
+        Endpoint::loop_back(TCP_SERVER_PROXY_PORT));
 
     ASSERT_TRUE(session);
 
@@ -51,7 +53,7 @@ TEST_F(ProxyChainTest, StressTest) {
         std::ostringstream oss;
         oss << "request_" << i;
         std::string msg = oss.str();
-        
+
         // Send request
         auto write_result = session->write(ConstBuffer(msg.data(), msg.size()), block);
         ASSERT_EQ(IOResultCode::Success, write_result.code);
@@ -60,40 +62,40 @@ TEST_F(ProxyChainTest, StressTest) {
         // Read response
         const auto read_result = session->read(buffer.view(), block);
         ASSERT_EQ(IOResultCode::Success, read_result.code);
-        
+
         // Verify response
         std::string response(buffer.view().data, read_result.count);
         std::string expected_response = "echo " + msg;
         ASSERT_EQ(expected_response, response) << "Failed on request " << i;
-        
+
         // Progress indicator every 1000 requests
         if (i % 1000 == 0) {
-            printf("StressTest: Completed %d/%d requests\n", i, num_requests);
+            logger_->log("StressTest: Completed %d/%d requests\n", i, num_requests);
         }
     }
 
-    printf("StressTest: All %d requests completed successfully\n", num_requests);
+    logger_->log("StressTest: All %d requests completed successfully\n", num_requests);
     client->disconnect();
 }
 
 void ProxyChainTest::SetUp() {
-
-    client_handler_ = tcp::create_tcp_echo_handler();
+    logger_ = logger::create_console_logger();
+    client_handler_ = tcp::create_tcp_echo_handler(*logger_);
 
     serverProxy_ = server_proxy::start_tcp_server_proxy(
-            Endpoint::loop_back(TCP_SERVER_PROXY_PORT),
-            Endpoint::loop_back(TCP_CLIENT_PROXY_PORT));
+        *logger_,
+        Endpoint::loop_back(TCP_SERVER_PROXY_PORT),
+        Endpoint::loop_back(TCP_CLIENT_PROXY_PORT));
 
     clientProxy_ = client_proxy::start_tcp_client_proxy(
-            Endpoint::loop_back(TCP_CLIENT_PROXY_PORT),
-            Endpoint::loop_back(TCP_SERVER_PORT));
+        *logger_,
+        Endpoint::loop_back(TCP_CLIENT_PROXY_PORT),
+        Endpoint::loop_back(TCP_SERVER_PORT));
 
-    tcp_server_ = start_tcp_server(
-            Endpoint::loop_back(TCP_SERVER_PORT),
-            *client_handler_);
-
-    // Wait for servers to be ready
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    tcp_server_ = tcp::start_tcp_server(
+        *logger_,
+        Endpoint::loop_back(TCP_SERVER_PORT),
+        *client_handler_);
 }
 
 void ProxyChainTest::TearDown() {
@@ -101,4 +103,3 @@ void ProxyChainTest::TearDown() {
     clientProxy_->stop();
     serverProxy_->stop();
 }
-

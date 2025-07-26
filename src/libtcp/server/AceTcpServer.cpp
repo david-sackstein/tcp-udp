@@ -5,9 +5,10 @@
 #include <ace/Log_Msg.h>
 #include <libacetools/Exports.h>
 
-AceTcpServer::AceTcpServer(const Endpoint& local_endpoint, tcp::ITcpClientHandler &handler)
-    : handler_(handler),
-      acceptor_(reactor_, handler_),
+AceTcpServer::AceTcpServer(logger::ILogger& logger, const Endpoint& local_endpoint, tcp::ITcpClientHandler &handler)
+    : logger_(logger),
+      handler_(handler),
+      acceptor_(logger, reactor_, handler_),
       signal_registration_(register_for_sigint(&reactor_))
 {
     if (acceptor_.open(local_endpoint) != 0) {
@@ -19,7 +20,7 @@ AceTcpServer::AceTcpServer(const Endpoint& local_endpoint, tcp::ITcpClientHandle
     }
     local_endpoint_ = acceptor_.get_local_endpoint();
 
-    printf("TcpServer: %s successfully bound\n", local_endpoint_.to_string().c_str());
+    logger_.log("TcpServer: %s successfully bound", local_endpoint_.to_string().c_str());
 }
 
 void AceTcpServer::start() {
@@ -34,5 +35,5 @@ void AceTcpServer::start() {
 void AceTcpServer::stop() {
     acceptor_.close();
     reactor_.end_reactor_event_loop();
-    printf("TcpServer: %s stopped\n", local_endpoint_.to_string().c_str());
+    logger_.log("TcpServer: %s stopped", local_endpoint_.to_string().c_str());
 }

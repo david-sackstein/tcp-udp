@@ -1,9 +1,8 @@
 #include "UdpClientServerTest.h"
 #include "common/OwnedBuffer.h"
 
+#include <liblogger/Exports.h>
 #include <libudp/Exports.h>
-
-#include <iostream>
 
 TEST_F(UdpClientServerTest, ClientSendsAndReceivesEcho) {
     runTest();
@@ -12,7 +11,7 @@ TEST_F(UdpClientServerTest, ClientSendsAndReceivesEcho) {
 void UdpClientServerTest::runTest() const {
     const auto server_endpoint = server_->get_local_endpoint();
 
-    auto client = udp::create_udp_client(Endpoint::any_loop_back()); // Bind to ephemeral port
+    auto client = udp::create_udp_client(*logger_, Endpoint::any_loop_back()); // Bind to ephemeral port
     ASSERT_NE(client, nullptr);
 
     const char *msg = "hello udp server";
@@ -38,8 +37,9 @@ void UdpClientServerTest::runTest() const {
 }
 
 void UdpClientServerTest::SetUp() {
-    client_handler_ = udp::create_udp_echo_handler();
-    server_ = udp::start_udp_server(Endpoint::any_loop_back(), *client_handler_);
+    logger_ = logger::create_console_logger();
+    client_handler_ = udp::create_udp_echo_handler(*logger_);
+    server_ = udp::start_udp_server(*logger_, Endpoint::any_loop_back(), *client_handler_);
 }
 
 void UdpClientServerTest::TearDown() {

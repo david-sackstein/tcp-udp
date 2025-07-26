@@ -9,9 +9,10 @@
 
 #include <iostream>
 
-AceTcpServerAcceptor::AceTcpServerAcceptor(ACE_Reactor &reactor, tcp::ITcpClientHandler &handler)
+AceTcpServerAcceptor::AceTcpServerAcceptor(logger::ILogger &logger, ACE_Reactor &reactor, tcp::ITcpClientHandler &handler)
     : reactor_(reactor),
-      client_handler_(handler) {
+      client_handler_(handler),
+      logger_(logger) {
 }
 
 int AceTcpServerAcceptor::open(const Endpoint &local_endpoint) {
@@ -19,10 +20,10 @@ int AceTcpServerAcceptor::open(const Endpoint &local_endpoint) {
 
     if (acceptor_.open(listen_addr, 1) == -1) {
         ACE_ERROR_RETURN(
-            (LM_ERROR, ACE_TEXT("Failed to open acceptor on %s, errno: %d (%s)\n"), 
-             local_endpoint.to_string().c_str(),
-             ACE_OS::last_error(),
-             ACE_OS::strerror(ACE_OS::last_error())), -1);
+            (LM_ERROR, ACE_TEXT("Failed to open acceptor on %s, errno: %d (%s)\n"),
+                local_endpoint.to_string().c_str(),
+                ACE_OS::last_error(),
+                ACE_OS::strerror(ACE_OS::last_error())), -1);
     }
 
     // Update to the actual bound address (handles ephemeral port)
@@ -30,8 +31,8 @@ int AceTcpServerAcceptor::open(const Endpoint &local_endpoint) {
 
     if (reactor_.register_handler(this, ACE_Event_Handler::READ_MASK) == -1) {
         ACE_ERROR((LM_ERROR, ACE_TEXT("Failed to register handler with reactor, errno: %d (%s)\n"),
-                   ACE_OS::last_error(),
-                   ACE_OS::strerror(ACE_OS::last_error())));
+            ACE_OS::last_error(),
+            ACE_OS::strerror(ACE_OS::last_error())));
         acceptor_.close();
         return -1;
     }
@@ -52,7 +53,7 @@ int AceTcpServerAcceptor::handle_input(ACE_HANDLE) {
     get_socket_io().set_linger_timeout(client_socket);
 
     auto client_session = std::make_unique<AceTcpClientSession>(
-        local_endpoint_, client_socket, client_addr);
+        logger_, local_endpoint_, client_socket, client_addr);
 
     std::unique_ptr<ITask> connection_task = client_handler_.handle_client(std::move(client_session));
 
@@ -85,4 +86,3 @@ void AceTcpServerAcceptor::stop_all_tasks() {
 
     tasks_.clear();
 }
-

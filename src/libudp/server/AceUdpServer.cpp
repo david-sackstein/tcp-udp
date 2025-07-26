@@ -9,10 +9,14 @@
 
 #include <iostream>
 
-AceUdpServer::AceUdpServer(const Endpoint &local_endpoint, udp::IUdpClientHandler &handler)
-    : handler_(handler),
+AceUdpServer::AceUdpServer(logger::ILogger& logger, const Endpoint &local_endpoint, udp::IUdpClientHandler &handler)
+    : logger_(logger),
+      reactor_(),
+      handler_(handler),
       signal_registration_(register_for_sigint(&reactor_)),
-      local_endpoint_(local_endpoint) {
+      local_endpoint_(local_endpoint),
+      stopped_(false),
+      is_cancelled_(false) {
 
     const ACE_INET_Addr local_addr = to_ace_addr(local_endpoint_);
     if (socket_.open(local_addr) == -1) {
@@ -20,15 +24,15 @@ AceUdpServer::AceUdpServer(const Endpoint &local_endpoint, udp::IUdpClientHandle
     }
     local_endpoint_ = get_bound_endpoint(socket_);
 
-    session_ = std::make_unique<AceUdpClientSession>(local_endpoint_, socket_);
+    session_ = std::make_unique<AceUdpClientSession>(logger_, local_endpoint_, socket_);
 
-    printf("UdpServer: %s successfully bound\n", local_endpoint_.to_string().c_str());
+    logger_.log("UdpServer: %s successfully bound", local_endpoint_.to_string().c_str());
 }
 
 AceUdpServer::~AceUdpServer() {
     stop();
     socket_.close();
-    printf("UdpServer: %s socket closed\n", local_endpoint_.to_string().c_str());
+    logger_.log("UdpServer: %s socket closed", local_endpoint_.to_string().c_str());
 }
 
 const Endpoint &AceUdpServer::get_local_endpoint() const {
@@ -50,7 +54,7 @@ void AceUdpServer::stop() {
 }
 
 int AceUdpServer::handle_input(ACE_HANDLE) {
-    printf("UdpServer: received message from %s\n", local_endpoint_.to_string().c_str());
+    logger_.log("UdpServer: received message from %s", local_endpoint_.to_string().c_str());
 
     auto task = handler_.handle_client(*session_);
     if (task) {

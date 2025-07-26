@@ -2,14 +2,13 @@
 
 #include <cstddef>
 #include <vector>
-#include <string>
 
 template<typename T>
 struct BufferT {
     T* data;
     size_t size;
 
-    BufferT() : data(nullptr), 0 {}
+    BufferT() : data(nullptr), size(0) {}
 
     BufferT(T* ptr, size_t len) : data(ptr), size(len) {}
 

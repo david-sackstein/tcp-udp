@@ -6,22 +6,30 @@
 #include <memory>
 #include <string>
 
+TcpEchoHandler::TcpEchoHandler(logger::ILogger& logger)
+    : logger_(logger) {}
+
 std::unique_ptr<ITask> TcpEchoHandler::handle_client(std::unique_ptr<tcp::ITcpSession> client_session) {
     std::shared_ptr shared_session = std::move(client_session);
 
-    return std::make_unique<RunningTask>([shared_session](std::atomic<bool>& cancelled) {
+    return std::make_unique<RunningTask>([shared_session, this](std::atomic<bool>& cancelled) {
         OwnedBuffer buffer_in(1024);
 
         while (!cancelled) {
             auto read_result = shared_session->read(buffer_in.view(), std::chrono::milliseconds(100));
             
             if (read_result.code == IOResultCode::Error) {
-                printf("TcpEchoHandler: failed to read: %s\n", read_result.error_message.c_str());
+                logger_.log("TcpEchoHandler: failed to read: %s", read_result.error_message.c_str());
                 break;
             }
-            if (read_result.code == IOResultCode::ConnectionClosed || read_result.code == IOResultCode::Timeout) {
-                printf("TcpEchoHandler: read %s\n", (read_result.code == IOResultCode::ConnectionClosed ? "ConnectionClosed" : "Timeout"));
+
+            if (read_result.code == IOResultCode::ConnectionClosed) {
+                logger_.log("TcpEchoHandler: read ConnectionClosed");
                 break;
+            }
+
+            if (read_result.code == IOResultCode::Timeout) {
+                continue; // Retry read
             }
 
             // Create response with "echo " prepended to the received message
@@ -34,12 +42,17 @@ std::unique_ptr<ITask> TcpEchoHandler::handle_client(std::unique_ptr<tcp::ITcpSe
             auto write_result = shared_session->write(buffer_out, std::chrono::milliseconds(100));
             
             if (write_result.code == IOResultCode::Error) {
-                printf("TcpEchoHandler: failed to write: %s\n", write_result.error_message.c_str());
+                logger_.log("TcpEchoHandler: failed to write: %s", write_result.error_message.c_str());
                 break;
             }
 
-            if (write_result.code == IOResultCode::ConnectionClosed || write_result.code == IOResultCode::Timeout) {
-                break; // Client disconnected or write timeout
+            if (write_result.code == IOResultCode::ConnectionClosed) {
+                logger_.log("TcpEchoHandler: write ConnectionClosed");
+                break;
+            }
+
+            if (write_result.code == IOResultCode::Timeout) {
+                break;
             }
         }
     });

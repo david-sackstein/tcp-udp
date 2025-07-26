@@ -10,6 +10,6 @@ namespace tcp {
     public:
         virtual ~ITcpClientHandler() = default;
 
-        virtual std::unique_ptr<ITask> handle_client(std::unique_ptr<tcp::ITcpSession> client_session) = 0;
+        virtual std::unique_ptr<ITask> handle_client(std::unique_ptr<ITcpSession> client_session) = 0;
     };
 }

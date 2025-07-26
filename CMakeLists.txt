@@ -15,7 +15,14 @@ link_directories(/usr/lib /usr/local/lib /opt/homebrew/lib)
 set(ACE_LIB ACE)
 
 # ================================
-# acetools library: owns ACE init/fini singleton
+# liblogger library
+file(GLOB_RECURSE LOGGER_SOURCES src/liblogger/*.cpp)
+file(GLOB_RECURSE LOGGER_HEADERS include/liblogger/*.h)
+add_library(liblogger SHARED ${LOGGER_SOURCES})
+target_include_directories(liblogger PUBLIC include/liblogger)
+
+# ================================
+# acetools library
 file(GLOB_RECURSE ACETOOLS_SOURCES src/libacetools/*.cpp)
 file(GLOB_RECURSE ACETOOLS_HEADERS include/libacetools/*.h)
 add_library(libacetools SHARED ${ACETOOLS_SOURCES})
@@ -66,29 +73,29 @@ target_link_libraries(libargsparser PRIVATE libacetools)
 # tcpclient executable
 file(GLOB_RECURSE TCPCLIENT_SOURCES src/tcpclient/*.cpp)
 add_executable(tcpclient ${TCPCLIENT_SOURCES})
-target_link_libraries(tcpclient PRIVATE libtcp)
+target_link_libraries(tcpclient PRIVATE libtcp liblogger)
 
 # ================================
 # tcp_echo_server executable
 file(GLOB_RECURSE TCP_ECHO_SERVER_SOURCES src/tcp_echo_server/*.cpp)
 add_executable(tcp_echo_server ${TCP_ECHO_SERVER_SOURCES})
-target_link_libraries(tcp_echo_server PRIVATE libtcp libargsparser)
+target_link_libraries(tcp_echo_server PRIVATE libtcp libargsparser liblogger)
 
 # ================================
 # udp_echo_server executable
 file(GLOB_RECURSE UDP_ECHO_SERVER_SOURCES src/udp_echo_server/*.cpp)
 add_executable(udp_echo_server ${UDP_ECHO_SERVER_SOURCES})
-target_link_libraries(udp_echo_server PRIVATE libudp libargsparser)
+target_link_libraries(udp_echo_server PRIVATE libudp libargsparser liblogger)
 
 # tcpclientproxy executable
 file(GLOB_RECURSE TCPCLIENTPROXY_APP_SOURCES src/tcpclientproxy/*.cpp)
 add_executable(tcpclientproxy ${TCPCLIENTPROXY_APP_SOURCES})
-target_link_libraries(tcpclientproxy PRIVATE libtcpclientproxy libargsparser)
+target_link_libraries(tcpclientproxy PRIVATE libtcpclientproxy libargsparser liblogger)
 
 # tcpserverproxy executable
 file(GLOB_RECURSE TCPSERVERPROXY_APP_SOURCES src/tcpserverproxy/*.cpp)
 add_executable(tcpserverproxy ${TCPSERVERPROXY_APP_SOURCES})
-target_link_libraries(tcpserverproxy PRIVATE libtcpserverproxy libargsparser)
+target_link_libraries(tcpserverproxy PRIVATE libtcpserverproxy libargsparser liblogger)
 
 # Tests executable
 file(GLOB_RECURSE TEST_SOURCES src/tests/*.cpp)
@@ -100,6 +107,7 @@ target_link_libraries(tests
         libudp
         libtcpclientproxy
         libtcpserverproxy
+        liblogger
         gtest
         gtest_main
         pthread

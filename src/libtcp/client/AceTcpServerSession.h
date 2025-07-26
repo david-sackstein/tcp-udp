@@ -2,6 +2,7 @@
 
 #include <libtcp/ITcpSession.h>
 #include <common/EndpointPair.h>
+#include <liblogger/ILogger.h>
 
 #include <ace/SOCK_Stream.h>
 #include <ace/INET_Addr.h>
@@ -9,6 +10,7 @@
 class AceTcpServerSession final : public tcp::ITcpSession {
 public:
     AceTcpServerSession(
+        logger::ILogger& logger,
         EndpointPair endpoint_pair,
         const ACE_SOCK_Stream &stream,
         const ACE_INET_Addr &addr);
@@ -24,6 +26,7 @@ public:
     void close() override;
 
 private:
+    logger::ILogger& logger_;
     EndpointPair endpoint_pair_;
     ACE_SOCK_Stream socket_;
     ACE_INET_Addr server_addr_;

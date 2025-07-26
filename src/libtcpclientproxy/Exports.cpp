@@ -13,14 +13,14 @@ namespace client_proxy {
     }
 
     EXPORTED std::unique_ptr<IBlockingServer>
-    create_tcp_client_proxy(const Endpoint &local_endpoint, const Endpoint &tcp_server) {
-        return std::make_unique<TcpClientProxy>(local_endpoint, tcp_server);
+    create_tcp_client_proxy(logger::ILogger& logger, const Endpoint &local_endpoint, const Endpoint &tcp_server) {
+        return std::make_unique<TcpClientProxy>(logger, local_endpoint, tcp_server);
     }
 
     EXPORTED std::unique_ptr<IBackgroundServer>
-    start_tcp_client_proxy(const Endpoint &local_endpoint, const Endpoint &tcp_server) {
+    start_tcp_client_proxy(logger::ILogger& logger, const Endpoint &local_endpoint, const Endpoint &tcp_server) {
         return startServer(
-                [&] { return create_tcp_client_proxy(local_endpoint, tcp_server); },
+                [&] { return create_tcp_client_proxy(logger, local_endpoint, tcp_server); },
                 [](auto &proxy) { proxy.start(); }
         );
     }

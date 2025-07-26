@@ -1,10 +1,13 @@
 #include <libtcpserverproxy/Exports.h>
 #include <libargsparser/Exports.h>
 #include <libtcpserverproxy/Exports.h>
+#include <liblogger/Exports.h>
 #include <iostream>
 #include <vector>
 
 int main(int argc, char* argv[]) {
+    auto logger = logger::create_console_logger();
+    
     const auto& local_addresses = server_proxy::get_local_ipv4_addresses();
     
     auto endpoint_strings = get_endpoint_configuration(argc, argv, local_addresses);
@@ -12,19 +15,16 @@ int main(int argc, char* argv[]) {
     Endpoint listen_ep = Endpoint::from_string(endpoint_strings.first);
     Endpoint forward_ep = Endpoint::from_string(endpoint_strings.second);
 
-    std::cout << "TCP Server Proxy running on " << listen_ep.to_string() << std::endl;
-    std::cout << "Forwarding connections to UDP proxy at " << forward_ep.to_string() << std::endl;
-    std::cout << "Press 'q' and Enter to stop the server..." << std::endl;
+    logger->log("TCP Server Proxy running on %s", listen_ep.to_string().c_str());
+    logger->log("Forwarding connections to UDP proxy at %s", forward_ep.to_string().c_str());
+    logger->log("Press 'q' and Enter to stop the server...");
 
-    auto server = server_proxy::create_tcp_server_proxy(listen_ep, forward_ep);
+    auto server = server_proxy::create_tcp_server_proxy(*logger, listen_ep, forward_ep);
 
-    // Start the server in a blocking manner (ACE reactor handles signals internally)
     server->start();
-
-    // Stop when ctrl-c aborts start
     server->stop();
 
-    std::cout << "tcpserverproxy shut down" << std::endl;
+    logger->log("tcpserverproxy shut down");
 
     return 0;
 }

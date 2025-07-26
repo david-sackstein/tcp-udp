@@ -6,6 +6,7 @@
 #include <common/server/IBlockingServer.h>
 #include <common/task/ITask.h>
 #include <libacetools/ISignalRegistration.h>
+#include <liblogger/ILogger.h>
 
 #include <ace/Reactor.h>
 #include <ace/SOCK_Dgram.h>
@@ -16,7 +17,7 @@
 
 class AceUdpServer final : public IBlockingServer, public ACE_Event_Handler {
 public:
-    AceUdpServer(const Endpoint& local_endpoint, udp::IUdpClientHandler &handler);
+    AceUdpServer(logger::ILogger& logger, const Endpoint& local_endpoint, udp::IUdpClientHandler &handler);
 
     ~AceUdpServer() override;
 
@@ -31,22 +32,18 @@ public:
     [[nodiscard]] ACE_HANDLE get_handle() const override;
 
 private:
-
     void stop_all_tasks();
 
+    logger::ILogger& logger_;
     ACE_Reactor reactor_;
     ACE_SOCK_Dgram socket_;
     udp::IUdpClientHandler &handler_;
     std::unique_ptr<ISignalRegistration> signal_registration_;
-
     Endpoint local_endpoint_;
+
     bool stopped_ = false;
     std::vector<std::unique_ptr<ITask>> tasks_;
-
-    // This flag is passed by reference to handlers for cancellation
     std::atomic<bool> is_cancelled_{false};
-    
-    // UDP client session as member (pointer since it contains a reference)
     std::unique_ptr<AceUdpClientSession> session_;
 };
 

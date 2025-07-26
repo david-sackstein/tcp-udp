@@ -8,8 +8,9 @@
 #include <stdexcept>
 #include <iostream>
 
-AceUdpClient::AceUdpClient(const Endpoint& local_endpoint)
-    : local_endpoint_(local_endpoint) {
+AceUdpClient::AceUdpClient(logger::ILogger& logger, const Endpoint& local_endpoint)
+    : local_endpoint_(local_endpoint),
+      logger_(logger) {
 
     ACE_INET_Addr local_addr = to_ace_addr(local_endpoint_);
 
@@ -19,13 +20,13 @@ AceUdpClient::AceUdpClient(const Endpoint& local_endpoint)
 
     local_endpoint_ = get_bound_endpoint(socket_);
 
-    printf("UdpClient: %s successfully bound\n", local_endpoint_.to_string().c_str());
+    logger_.log("UdpClient: %s successfully bound", local_endpoint_.to_string().c_str());
 }
 
 AceUdpClient::~AceUdpClient() {
     if (socket_.get_handle() != ACE_INVALID_HANDLE) {
         socket_.close();
-        printf("UdpClient: %s socket closed\n", local_endpoint_.to_string().c_str());
+        logger_.log("UdpClient: %s socket closed", local_endpoint_.to_string().c_str());
     }
 }
 
@@ -37,7 +38,7 @@ bool AceUdpClient::send_to(const Endpoint& remote, ConstBuffer buffer) {
         ACE_ERROR_RETURN((LM_ERROR, ACE_TEXT("Failed to send UDP data\n")), false);
     }
 
-    printf("UdpClient: %s -> %s sent: \"%.*s\"\n",
+    logger_.log("UdpClient: %s -> %s sent: \"%.*s\"",
            local_endpoint_.to_string().c_str(),
            remote.to_string().c_str(),
            (int)buffer.size,
@@ -55,7 +56,7 @@ ssize_t AceUdpClient::receive_from(Buffer buffer, Endpoint& sender) {
 
     sender = to_endpoint(sender_addr);
 
-    printf("UdpClient: %s <- %s received: \"%.*s\"\n",
+    logger_.log("UdpClient: %s <- %s received: \"%.*s\"",
            get_bound_endpoint(socket_).to_string().c_str(),
            sender.to_string().c_str(),
            (int)received,

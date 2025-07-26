@@ -3,21 +3,21 @@
 
 #include <libudp/Exports.h>
 
-#include <iostream>
 #include <utility>
 
-TcpClientProxy::TcpClientProxy(const Endpoint& local_endpoint, Endpoint tcp_server)
+TcpClientProxy::TcpClientProxy(logger::ILogger &logger, const Endpoint &local_endpoint, Endpoint tcp_server)
     : local_endpoint_(local_endpoint),
-      tcp_server_(std::move(tcp_server)) {
-    udp_handler_ = std::make_unique<TcpClientProxyUdpHandler>(local_endpoint, tcp_server_);
-    udp_server_ = udp::create_udp_server(local_endpoint, *udp_handler_);
+      tcp_server_(std::move(tcp_server)),
+      logger_(logger) {
+    udp_handler_ = std::make_unique<TcpClientProxyUdpHandler>(logger, local_endpoint, tcp_server_);
+    udp_server_ = udp::create_udp_server(logger_, local_endpoint, *udp_handler_);
 }
 
-TcpClientProxy::~TcpClientProxy(){
+TcpClientProxy::~TcpClientProxy() {
     stop();
 }
 
-const Endpoint& TcpClientProxy::get_local_endpoint() const {
+const Endpoint &TcpClientProxy::get_local_endpoint() const {
     return local_endpoint_;
 }
 

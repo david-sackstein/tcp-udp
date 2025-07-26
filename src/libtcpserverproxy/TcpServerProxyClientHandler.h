@@ -4,12 +4,14 @@
 #include <common/OwnedBuffer.h>
 #include <libtcp/server/ITcpClientHandler.h>
 #include <libudp/client/IUdpClient.h>
+#include <liblogger/ILogger.h>
 
 #include <functional>
 
 class TcpServerProxyClientHandler : public tcp::ITcpClientHandler {
 public:
     TcpServerProxyClientHandler(
+        logger::ILogger& logger,
         Endpoint udp_proxy,
         udp::IUdpClient &udp_client
     );
@@ -23,11 +25,12 @@ private:
     ConstBuffer read_from_tcp_client(const std::shared_ptr<tcp::ITcpSession>& tcp_session, const Endpoint& tcp_client);
     void send_to_udp_proxy(ConstBuffer data, const Endpoint& tcp_client);
     ConstBuffer receive_from_udp_proxy(const Endpoint& tcp_client);
-    static void send_response_to_tcp_client(const std::shared_ptr<tcp::ITcpSession>& tcp_session, ConstBuffer response, const Endpoint& tcp_client);
+    void send_response_to_tcp_client(const std::shared_ptr<tcp::ITcpSession>& tcp_session, ConstBuffer response, const Endpoint& tcp_client);
     
     // Cancellation check method
     static void check_cancellation(std::atomic<bool>& cancelled);
 
+    logger::ILogger& logger_;
     const Endpoint udp_proxy_;
     udp::IUdpClient &udp_client_;
     

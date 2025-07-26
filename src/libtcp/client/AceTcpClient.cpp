@@ -5,6 +5,9 @@
 
 #include <iostream>
 
+AceTcpClient::AceTcpClient(logger::ILogger& logger)
+    : logger_(logger) {}
+
 AceTcpClient::~AceTcpClient() noexcept {
     disconnect();
 }
@@ -29,11 +32,12 @@ std::shared_ptr<tcp::ITcpSession> AceTcpClient::connect(const Endpoint &local, c
 
     endpoint_pair_ = {get_bound_endpoint(socket), remote};
 
-    printf("TcpClient: %s -> %s connected\n",
+    logger_.log("TcpClient: %s -> %s connected",
            endpoint_pair_.local.to_string().c_str(),
            endpoint_pair_.remote.to_string().c_str());
 
     session_ = std::make_shared<AceTcpServerSession>(
+        logger_,
         endpoint_pair_, std::move(socket), remote_addr);
 
     return session_;
@@ -44,7 +48,7 @@ void AceTcpClient::disconnect() {
         session_->close();
         session_.reset();
 
-        printf("TcpClient: %s -> %s disconnected\n",
+        logger_.log("TcpClient: %s -> %s disconnected",
                endpoint_pair_.local.to_string().c_str(),
                endpoint_pair_.remote.to_string().c_str());
     }

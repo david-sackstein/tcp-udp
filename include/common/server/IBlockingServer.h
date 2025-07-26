@@ -2,8 +2,6 @@
 
 #include <common/Endpoint.h>
 
-#include <cstdint>
-
 class IBlockingServer {
 public:
     virtual ~IBlockingServer() = default;

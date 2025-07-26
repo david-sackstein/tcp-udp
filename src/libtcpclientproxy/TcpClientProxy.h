@@ -8,7 +8,7 @@
 
 class TcpClientProxy final : public IBlockingServer {
 public:
-    TcpClientProxy(const Endpoint& local_endpoint, Endpoint  tcp_server);
+    TcpClientProxy(logger::ILogger& logger, const Endpoint& local_endpoint, Endpoint  tcp_server);
     ~TcpClientProxy() override;
 
     [[nodiscard]] const Endpoint& get_local_endpoint() const override;
@@ -22,4 +22,5 @@ private:
 
     std::unique_ptr<IBlockingServer> udp_server_;
     std::unique_ptr<TcpClientProxyUdpHandler> udp_handler_;
+    logger::ILogger& logger_;
 }; 

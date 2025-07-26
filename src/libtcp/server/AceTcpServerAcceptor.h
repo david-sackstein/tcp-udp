@@ -1,6 +1,7 @@
 #pragma once
 
 #include <libtcp/server/ITcpClientHandler.h>
+#include <liblogger/ILogger.h>
 #include <common/task/ITask.h>
 
 #include <ace/Event_Handler.h>
@@ -11,7 +12,7 @@
 
 class AceTcpServerAcceptor final : public ACE_Event_Handler {
 public:
-    AceTcpServerAcceptor(ACE_Reactor& reactor, tcp::ITcpClientHandler& handler);
+    AceTcpServerAcceptor(logger::ILogger& logger, ACE_Reactor& reactor, tcp::ITcpClientHandler& handler);
 
     int open(const Endpoint& local_endpoint);
     int close();
@@ -36,4 +37,6 @@ private:
 
     // This flag is passed by reference to handlers for cancellation
     std::atomic<bool> is_cancelled_{false};
+
+    logger::ILogger& logger_;
 };

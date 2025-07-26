@@ -3,11 +3,13 @@
 #include "AceTcpServerSession.h"
 
 #include "libtcp/client/ITcpClient.h"
+#include <liblogger/ILogger.h>
 
 #include <ace/SOCK_Connector.h>
 
 class AceTcpClient final : public tcp::ITcpClient {
 public:
+    explicit AceTcpClient(logger::ILogger& logger);
     ~AceTcpClient() noexcept override;
 
     std::shared_ptr<tcp::ITcpSession> connect(const Endpoint& local, const Endpoint& remote) override;
@@ -16,6 +18,7 @@ public:
 private:
     ACE_SOCK_Connector connector_;
     std::shared_ptr<AceTcpServerSession> session_;
+    logger::ILogger& logger_;
 
     EndpointPair endpoint_pair_;
 };

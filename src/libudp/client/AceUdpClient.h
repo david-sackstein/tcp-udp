@@ -2,6 +2,7 @@
 
 #include <libudp/client/IUdpClient.h>
 #include <common/Buffer.h>
+#include <liblogger/ILogger.h>
 
 #include <ace/SOCK_Dgram.h>
 #include <ace/INET_Addr.h>
@@ -10,7 +11,7 @@
 
 class AceUdpClient final : public udp::IUdpClient {
 public:
-    explicit AceUdpClient(const Endpoint& local_endpoint);
+    AceUdpClient(logger::ILogger& logger, const Endpoint& local_endpoint);
     ~AceUdpClient() override;
 
     [[nodiscard]] const Endpoint& get_local_endpoint() const override {
@@ -23,4 +24,5 @@ public:
 private:
     Endpoint local_endpoint_;
     ACE_SOCK_Dgram socket_;
+    logger::ILogger& logger_;
 };
