@@ -75,12 +75,14 @@ IOResult SocketIO::from_size(ssize_t n) {
         return IOResult::result_connection_closed();
     }
     // n == -1
-    int error = ACE_OS::last_error();
-    if (error == EAGAIN || error == EWOULDBLOCK) {
+    const int error = ACE_OS::last_error();
+    if (error == EAGAIN || error == EWOULDBLOCK || error == ETIME) {
         return IOResult::result_timeout();
-    } else {
-        return IOResult::result_error(create_error_message(error));
     }
+    if (error == ECONNRESET || error == ENOTCONN || error == EBADF) {
+        return IOResult::result_connection_closed();
+    }
+    return IOResult::result_error(create_error_message(error));
 }
 
 std::string SocketIO::create_error_message(int ace_last_error) {

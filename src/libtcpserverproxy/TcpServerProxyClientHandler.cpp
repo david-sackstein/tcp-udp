@@ -65,18 +65,20 @@ std::function<void(std::atomic<bool>&)> TcpServerProxyClientHandler::make_work(c
 ConstBuffer TcpServerProxyClientHandler::read_from_tcp_client(const std::shared_ptr<tcp::ITcpSession>& tcp_session, const Endpoint& tcp_client) {
     IOResult result = tcp_session->read(tcp_buffer_.view(), block);
     
-    if (result.code == IOResultCode::Success) {
-        if (result.count > 0) {
-            return tcp_buffer_.view(result.count);
-        } else {
-            // No data received
-            return ConstBuffer(nullptr, 0);
-        }
-    } else {
-        std::string msg = "TcpServerProxyClientHandler: " + tcp_client.to_string() + " failed to read from " + tcp_client.to_string() + ": " + result.error_message;
-        printf("%s\n", msg.c_str());
+    if (result.code == IOResultCode::Error) {
+        printf("TcpServerProxyClientHandler: %s failed to read: %s\n", tcp_client.to_string().c_str(), result.error_message.c_str());
         throw std::runtime_error("Failed to read from TCP client: " + result.error_message);
     }
+    
+    if (result.code == IOResultCode::ConnectionClosed || result.code == IOResultCode::Timeout) {
+        return {}; // Graceful cleanup
+    }
+    
+    if (result.count == 0) {
+        return {}; // No data received
+    }
+    
+    return tcp_buffer_.view(result.count); // Success case
 }
 
 void TcpServerProxyClientHandler::send_to_udp_proxy(ConstBuffer data, const Endpoint& tcp_client) {
@@ -105,11 +107,16 @@ void TcpServerProxyClientHandler::send_response_to_tcp_client(
 
     IOResult result = tcp_session->write(response, block);
     
-    if (result.code != IOResultCode::Success) {
-        std::string msg = "TcpServerProxyClientHandler: " + tcp_client.to_string() + " failed to send response to " + tcp_client.to_string() + ": " + result.error_message;
-        printf("%s\n", msg.c_str());
+    if (result.code == IOResultCode::Error) {
+        printf("TcpServerProxyClientHandler: %s failed to send response: %s\n", tcp_client.to_string().c_str(), result.error_message.c_str());
         throw std::runtime_error("Failed to send response to TCP client: " + result.error_message);
     }
+    
+    if (result.code == IOResultCode::ConnectionClosed || result.code == IOResultCode::Timeout) {
+        return; // Graceful cleanup
+    }
+    
+    // Success case - write completed successfully
 }
 
 void TcpServerProxyClientHandler::check_cancellation(std::atomic<bool>& cancelled) {

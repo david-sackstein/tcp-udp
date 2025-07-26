@@ -9,6 +9,8 @@ struct BufferT {
     T* data;
     size_t size;
 
+    BufferT() : data(nullptr), 0 {}
+
     BufferT(T* ptr, size_t len) : data(ptr), size(len) {}
 
     explicit BufferT(std::vector<T>& v) : data(v.data()), size(v.size()) {}
