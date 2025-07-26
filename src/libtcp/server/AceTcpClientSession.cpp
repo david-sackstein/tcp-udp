@@ -1,7 +1,7 @@
 #include "AceTcpClientSession.h"
 
 #include <libacetools/Exports.h>
-#include <common/IOResultCode.h>
+#include <libacetools/IOResultCode.h>
 
 #include <ace/Time_Value.h>
 

@@ -4,7 +4,7 @@
 
 #include <common/Buffer.h>
 #include <common/Endpoint.h>
-#include <common/IOResult.h>
+#include <libacetools/IOResult.h>
 
 #include <ace/SOCK_Stream.h>
 #include <ace/SOCK_Dgram.h>
