@@ -175,6 +175,9 @@ tcptest: $(TESTS)
 udptest: $(TESTS)
 	GTEST_FILTER=UdpClientServerTest.* ./$(TESTS)
 
+killall:
+	sudo lsof -i :15001 -i :15002 -i :15003 -sTCP:LISTEN -t | xargs -r sudo kill -9
+
 # Clean rule
-clean:
+clean: killall
 	rm -rf $(OBJ_DIR) $(BIN_DIR)
