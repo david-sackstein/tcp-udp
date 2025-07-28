@@ -1,26 +1,43 @@
 #include "UdpTcpBinding.h"
 
+#include <libacetools/IOResultCode.h>
+#include <libacetools/Exports.h>
+
+static ISocketIO& io_ = get_socket_io();
+
 ACE_HANDLE UdpTcpBinding::get_handle() const {
     return tcp_session_->get_socket();
 }
 
 int UdpTcpBinding::handle_input(ACE_HANDLE) {
-    // For now, just return 0 - no actual TCP reading yet
-    // This will be implemented in Step 4
+    auto result = tcp_session_->read(buffer_.view(), std::chrono::milliseconds(0));
+    
+    if (result.code == IOResultCode::Success && result.count > 0) {
+        ConstBuffer tcp_data{buffer_.view().data, result.count};
+        udp_session_.write_to(tcp_data, udp_sender_, std::chrono::milliseconds(1000));
+        return 0;
+    }
+    
+    if (result.code == IOResultCode::ConnectionClosed || result.code == IOResultCode::Error) {
+        unregister_from_reactor();
+        return -1;
+    }
+    
     return 0;
 }
 
 void UdpTcpBinding::register_with_reactor(ACE_Reactor* reactor) {
     if (!registered_ && reactor) {
         reactor_ = reactor;
-        reactor_->register_handler(this, READ_MASK);
-        registered_ = true;
+        if (reactor_->register_handler(this, ACE_Event_Handler::READ_MASK) == 0) {
+            registered_ = true;
+        }
     }
 }
 
 void UdpTcpBinding::unregister_from_reactor() {
     if (registered_ && reactor_) {
-        reactor_->remove_handler(this, READ_MASK);
+        reactor_->remove_handler(this, ACE_Event_Handler::READ_MASK);
         registered_ = false;
         reactor_ = nullptr;
     }

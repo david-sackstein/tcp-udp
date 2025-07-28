@@ -8,7 +8,7 @@ TcpClientProxy::TcpClientProxy(logger::ILogger &logger, const Endpoint &local_en
       tcp_server_(std::move(tcp_server)),
       reactor_(std::make_shared<ACE_Reactor>()),
       logger_(logger) {
-    udp_handler_ = std::make_unique<TcpClientProxyUdpHandler>(logger, local_endpoint, tcp_server_);
+    udp_handler_ = std::make_unique<TcpClientProxyUdpHandler>(logger, local_endpoint, tcp_server_, reactor_);
     udp_server_ = udp::create_udp_server(logger_, local_endpoint, *udp_handler_, reactor_);
 }
 
