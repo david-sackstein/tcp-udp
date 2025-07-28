@@ -9,15 +9,16 @@
 
 #include <iostream>
 
-AceUdpServer::AceUdpServer(logger::ILogger& logger, const Endpoint &local_endpoint, udp::IUdpClientHandler &handler)
+AceUdpServer::AceUdpServer(
+    logger::ILogger &logger,
+    const Endpoint &local_endpoint,
+    udp::IUdpClientHandler &handler,
+    std::unique_ptr<ACE_Reactor> external_reactor)
     : logger_(logger),
-      reactor_(),
+      reactor_(external_reactor ? std::move(external_reactor) : std::make_unique<ACE_Reactor>()),
       handler_(handler),
-      signal_registration_(register_for_sigint(&reactor_)),
-      local_endpoint_(local_endpoint),
-      stopped_(false),
-      is_cancelled_(false) {
-
+      signal_registration_(register_for_sigint(reactor_.get())),
+      local_endpoint_(local_endpoint) {
     const ACE_INET_Addr local_addr = to_ace_addr(local_endpoint_);
     if (socket_.open(local_addr) == -1) {
         throw std::runtime_error("Failed to open UDP socket at " + local_endpoint.to_string());
@@ -40,15 +41,15 @@ const Endpoint &AceUdpServer::get_local_endpoint() const {
 }
 
 void AceUdpServer::start() {
-    reactor_.register_handler(this, READ_MASK);
-    reactor_.run_reactor_event_loop();
+    reactor_->register_handler(this, READ_MASK);
+    reactor_->run_reactor_event_loop();
 }
 
 void AceUdpServer::stop() {
     if (stopped_) {
         return; // Already stopped
     }
-    reactor_.end_reactor_event_loop();
+    reactor_->end_reactor_event_loop();
     stop_all_tasks();
     stopped_ = true;
 }

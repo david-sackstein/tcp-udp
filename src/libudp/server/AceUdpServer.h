@@ -17,7 +17,8 @@
 
 class AceUdpServer final : public IBlockingServer, public ACE_Event_Handler {
 public:
-    AceUdpServer(logger::ILogger& logger, const Endpoint& local_endpoint, udp::IUdpClientHandler &handler);
+    AceUdpServer(logger::ILogger& logger, const Endpoint& local_endpoint, udp::IUdpClientHandler &handler, 
+                 std::unique_ptr<ACE_Reactor> external_reactor = nullptr);
 
     ~AceUdpServer() override;
 
@@ -35,7 +36,7 @@ private:
     void stop_all_tasks();
 
     logger::ILogger& logger_;
-    ACE_Reactor reactor_;
+    std::unique_ptr<ACE_Reactor> reactor_;
     ACE_SOCK_Dgram socket_;
     udp::IUdpClientHandler &handler_;
     std::unique_ptr<ISignalRegistration> signal_registration_;
