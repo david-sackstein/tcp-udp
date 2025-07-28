@@ -70,11 +70,11 @@ TEST_F(ProxyChainTest, StressTest) {
 
         // Progress indicator every 1000 requests
         if (i % 1000 == 0) {
-            logger_->log("StressTest: Completed %d/%d requests\n", i, num_requests);
+            logger_->log("StressTest: Completed %d/%d requests", i, num_requests);
         }
     }
 
-    logger_->log("StressTest: All %d requests completed successfully\n", num_requests);
+    logger_->log("StressTest: All %d requests completed successfully", num_requests);
     client->disconnect();
 }
 
