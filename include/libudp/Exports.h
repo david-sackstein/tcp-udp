@@ -3,11 +3,11 @@
 #include "client/IUdpClient.h"
 #include "server/IUdpClientHandler.h"
 
-#include <libudp/Exports.h>
 #include <liblogger/ILogger.h>
-
 #include <common/server/IBackgroundServer.h>
 #include <common/server/IBlockingServer.h>
+
+#include <memory>
 
 namespace udp {
     EXPORTED const std::vector<std::string> &get_local_ipv4_addresses();

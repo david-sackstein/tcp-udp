@@ -13,9 +13,9 @@ AceUdpServer::AceUdpServer(
     logger::ILogger &logger,
     const Endpoint &local_endpoint,
     udp::IUdpClientHandler &handler,
-    std::unique_ptr<ACE_Reactor> external_reactor)
+    std::shared_ptr<ACE_Reactor> external_reactor)
     : logger_(logger),
-      reactor_(external_reactor ? std::move(external_reactor) : std::make_unique<ACE_Reactor>()),
+      reactor_(external_reactor ? std::move(external_reactor) : std::make_shared<ACE_Reactor>()),
       handler_(handler),
       signal_registration_(register_for_sigint(reactor_.get())),
       local_endpoint_(local_endpoint) {
@@ -50,6 +50,7 @@ void AceUdpServer::stop() {
         return; // Already stopped
     }
     reactor_->end_reactor_event_loop();
+    reactor_->remove_handler(this, READ_MASK);
     stop_all_tasks();
     stopped_ = true;
 }

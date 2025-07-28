@@ -2,7 +2,7 @@
 
 #include "TcpClientProxyUdpHandler.h"
 
-#include <common/server/IBlockingServer.h>
+#include <libudp/InternalExports.h>
 
 #include <memory>
 
@@ -20,6 +20,7 @@ private:
     const Endpoint local_endpoint_;
     const Endpoint tcp_server_;
 
+    std::shared_ptr<ACE_Reactor> reactor_;
     std::unique_ptr<IBlockingServer> udp_server_;
     std::unique_ptr<TcpClientProxyUdpHandler> udp_handler_;
     logger::ILogger& logger_;
