@@ -86,7 +86,10 @@ ConstBuffer TcpClientProxyUdpHandler::read_udp_message(
     IOResult udp_read_result = client_session.read_from(buffer_.view(), udp_sender, block);
 
     if (udp_read_result.code == IOResultCode::Error) {
-        throw std::runtime_error(format_string("TcpClientProxyUdpHandler: %s failed to read UDP: %s", udp_sender.to_string().c_str(), udp_read_result.error_message.c_str()));
+        throw std::runtime_error(format_string(
+            "TcpClientProxyUdpHandler: %s failed to read UDP: %s",
+            udp_sender.to_string().c_str(),
+            udp_read_result.error_message.c_str()));
     }
 
     if (udp_read_result.code == IOResultCode::ConnectionClosed) {
@@ -101,12 +104,16 @@ ConstBuffer TcpClientProxyUdpHandler::read_udp_message(
     return buffer_.view(udp_read_result.count);
 }
 
-void TcpClientProxyUdpHandler::send_to_tcp_server(const UdpTcpBinding& binding, ConstBuffer data, const Endpoint& udp_sender) {
+void TcpClientProxyUdpHandler::send_to_tcp_server(
+    const UdpTcpBinding& binding, ConstBuffer data, const Endpoint& udp_sender) const {
     auto& tcp_session = binding.get_tcp_session();
     auto tcp_send_result = tcp_session.write(data, block);
     
     if (tcp_send_result.code == IOResultCode::Error) {
-        throw std::runtime_error(format_string("TcpClientProxyUdpHandler: %s failed to send to TCP server: %s", udp_sender.to_string().c_str(), tcp_send_result.error_message.c_str()));
+        throw std::runtime_error(format_string(
+            "TcpClientProxyUdpHandler: %s failed to send to TCP server: %s",
+            udp_sender.to_string().c_str(),
+            tcp_send_result.error_message.c_str()));
     }
     
     if (tcp_send_result.code == IOResultCode::ConnectionClosed) {
@@ -124,7 +131,10 @@ ConstBuffer TcpClientProxyUdpHandler::read_from_tcp_server(const UdpTcpBinding& 
     auto tcp_read_result = tcp_session.read(buffer_.view(), block);
     
     if (tcp_read_result.code == IOResultCode::Error) {
-        throw std::runtime_error(format_string("TcpClientProxyUdpHandler: %s failed to read from TCP server: %s", udp_sender.to_string().c_str(), tcp_read_result.error_message.c_str()));
+        throw std::runtime_error(format_string(
+            "TcpClientProxyUdpHandler: %s failed to read from TCP server: %s",
+            udp_sender.to_string().c_str(),
+            tcp_read_result.error_message.c_str()));
     }
     
     if (tcp_read_result.code == IOResultCode::ConnectionClosed) {
@@ -140,12 +150,15 @@ ConstBuffer TcpClientProxyUdpHandler::read_from_tcp_server(const UdpTcpBinding& 
 }
 
 void TcpClientProxyUdpHandler::send_response_to_udp(
-    udp::IUdpSession& client_session, ConstBuffer response, const Endpoint& udp_sender) {
+    udp::IUdpSession& client_session, ConstBuffer response, const Endpoint& udp_sender) const {
 
     IOResult udp_write_result = client_session.write_to(response, udp_sender, block);
     
     if (udp_write_result.code == IOResultCode::Error) {
-        throw std::runtime_error(format_string("TcpClientProxyUdpHandler: %s failed to send UDP response: %s", udp_sender.to_string().c_str(), udp_write_result.error_message.c_str()));
+        throw std::runtime_error(format_string(
+            "TcpClientProxyUdpHandler: %s failed to send UDP response: %s",
+            udp_sender.to_string().c_str(),
+            udp_write_result.error_message.c_str()));
     }
     
     if (udp_write_result.code == IOResultCode::ConnectionClosed) {
@@ -158,7 +171,7 @@ void TcpClientProxyUdpHandler::send_response_to_udp(
     }
 }
 
-void TcpClientProxyUdpHandler::check_cancellation(std::atomic<bool>& cancelled) {
+void TcpClientProxyUdpHandler::check_cancellation(const std::atomic<bool>& cancelled) {
     if (cancelled) {
         throw std::runtime_error("TcpClientProxyUdpHandler was cancelled");
     }

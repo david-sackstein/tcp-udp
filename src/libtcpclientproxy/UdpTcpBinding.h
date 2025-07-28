@@ -6,7 +6,7 @@
 #include <ace/Event_Handler.h>
 #include <ace/Reactor.h>
 
-class UdpTcpBinding : public ACE_Event_Handler {
+class UdpTcpBinding final : public ACE_Event_Handler {
 public:
     UdpTcpBinding(
         std::unique_ptr<tcp::ITcpClient> client,
@@ -18,7 +18,7 @@ public:
     // ACE_Event_Handler interface
     int handle_input(ACE_HANDLE fd) override;
 
-    ACE_HANDLE get_handle() const override;
+    [[nodiscard]] ACE_HANDLE get_handle() const override;
 
     // Registration methods
     void register_with_reactor(ACE_Reactor *reactor);

@@ -9,7 +9,7 @@
 #include <unordered_map>
 #include <memory>
 
-class TcpClientProxyUdpHandler : public udp::IUdpClientHandler {
+class TcpClientProxyUdpHandler final : public udp::IUdpClientHandler {
 public:
     TcpClientProxyUdpHandler(logger::ILogger& logger, Endpoint  local_endpoint, Endpoint tcp_server);
 
@@ -23,11 +23,11 @@ private:
 
     ConstBuffer read_udp_message(udp::IUdpSession& client_session, Endpoint& udp_sender);
     BindingPtr& get_or_create_binding(const std::string& source_key);
-    void send_to_tcp_server(const UdpTcpBinding& binding, ConstBuffer data, const Endpoint& udp_sender);
+    void send_to_tcp_server(const UdpTcpBinding& binding, ConstBuffer data, const Endpoint& udp_sender) const;
     ConstBuffer read_from_tcp_server(const UdpTcpBinding& binding, const Endpoint& udp_sender);
-    void send_response_to_udp(udp::IUdpSession& client_session, ConstBuffer response, const Endpoint& udp_sender);
+    void send_response_to_udp(udp::IUdpSession& client_session, ConstBuffer response, const Endpoint& udp_sender) const;
 
-    void check_cancellation(std::atomic<bool>& cancelled);
+    static void check_cancellation(const std::atomic<bool>& cancelled);
     BindingPtr& create_binding(const std::string& source_key);
 
     logger::ILogger& logger_;
