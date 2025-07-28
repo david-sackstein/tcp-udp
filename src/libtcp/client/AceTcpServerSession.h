@@ -18,6 +18,7 @@ public:
     ~AceTcpServerSession() override;
 
     [[nodiscard]] Endpoint get_peer() const override;
+    [[nodiscard]] int get_socket() const override { return socket_.get_handle(); }
 
     IOResult read(Buffer buffer, std::chrono::milliseconds timeout) override;
 

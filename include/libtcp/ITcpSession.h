@@ -13,6 +13,7 @@ namespace tcp {
         virtual ~ITcpSession() = default;
 
         [[nodiscard]] virtual Endpoint get_peer() const = 0;
+        [[nodiscard]] virtual int get_socket() const = 0;
 
         // pass block = std::chrono::milliseconds::max() to truly block (don't)
 

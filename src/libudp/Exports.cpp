@@ -29,7 +29,7 @@ namespace udp {
         logger::ILogger &logger,
         const Endpoint &local_endpoint,
         IUdpClientHandler &handler,
-        const std::shared_ptr<ACE_Reactor>& reactor) {
+        const std::shared_ptr<ACE_Reactor> &reactor) {
         return std::make_unique<AceUdpServer>(logger, local_endpoint, handler, reactor);
     }
 
@@ -41,18 +41,15 @@ namespace udp {
     }
 
     EXPORTED std::unique_ptr<IBackgroundServer> start_udp_server(
-     logger::ILogger &logger,
-     const Endpoint &local_endpoint,
-     IUdpClientHandler &handler,
-     const std::shared_ptr<ACE_Reactor> &reactor) {
-
+        logger::ILogger &logger,
+        const Endpoint &local_endpoint,
+        IUdpClientHandler &handler,
+        const std::shared_ptr<ACE_Reactor> &reactor) {
         return startServer(
             [reactor, &logger, &local_endpoint, &handler] {
                 return create_udp_server(logger, local_endpoint, handler, reactor);
             },
-            [](auto &server) {
-                server.start();
-            }
+            [](auto &server) { server.start(); }
         );
     }
 

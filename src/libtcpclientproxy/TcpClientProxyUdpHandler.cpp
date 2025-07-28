@@ -75,7 +75,7 @@ TcpClientProxyUdpHandler::BindingPtr& TcpClientProxyUdpHandler::create_binding(c
         throw std::runtime_error("Failed to connect to TCP server");
     }
 
-    auto binding = std::make_unique<UdpTcpBinding>(UdpTcpBinding{std::move(client), session});
+    auto binding = std::make_unique<UdpTcpBinding>(std::move(client), session);
     auto [it, inserted] = bindings_.emplace(source_key, std::move(binding));
     return it->second;
 }
@@ -102,8 +102,8 @@ ConstBuffer TcpClientProxyUdpHandler::read_udp_message(
 }
 
 void TcpClientProxyUdpHandler::send_to_tcp_server(const UdpTcpBinding& binding, ConstBuffer data, const Endpoint& udp_sender) {
-    auto tcp_session = binding.tcp_session;
-    auto tcp_send_result = tcp_session->write(data, block);
+    auto& tcp_session = binding.get_tcp_session();
+    auto tcp_send_result = tcp_session.write(data, block);
     
     if (tcp_send_result.code == IOResultCode::Error) {
         throw std::runtime_error(format_string("TcpClientProxyUdpHandler: %s failed to send to TCP server: %s", udp_sender.to_string().c_str(), tcp_send_result.error_message.c_str()));
@@ -120,8 +120,8 @@ void TcpClientProxyUdpHandler::send_to_tcp_server(const UdpTcpBinding& binding, 
 }
 
 ConstBuffer TcpClientProxyUdpHandler::read_from_tcp_server(const UdpTcpBinding& binding, const Endpoint& udp_sender) {
-    auto tcp_session = binding.tcp_session;
-    auto tcp_read_result = tcp_session->read(buffer_.view(), block);
+    auto& tcp_session = binding.get_tcp_session();
+    auto tcp_read_result = tcp_session.read(buffer_.view(), block);
     
     if (tcp_read_result.code == IOResultCode::Error) {
         throw std::runtime_error(format_string("TcpClientProxyUdpHandler: %s failed to read from TCP server: %s", udp_sender.to_string().c_str(), tcp_read_result.error_message.c_str()));
