@@ -168,6 +168,7 @@ void MultiClientNotificationTest::runNotificationTest(bool useProxies) {
         : setupDirectConnection(false);
     
     logger_->log("Waiting for servers to initialize (necessary for proxy chain setup)...");
+    logger_->log("*** SLEEPING for 200ms for server initialization ***");
     std::this_thread::sleep_for(std::chrono::milliseconds(200)); // Reduced from 500ms
     
     logger_->log("Creating and connecting clients...");
@@ -223,11 +224,13 @@ void MultiClientNotificationTest::runCrossClientNotificationTest(bool useProxies
         : setupDirectConnection(true);
     
     logger_->log("Waiting for server chain to stabilize (required for multi-proxy coordination)...");
+    logger_->log("*** SLEEPING for 300ms for proxy chain stabilization ***");
     std::this_thread::sleep_for(std::chrono::milliseconds(300)); // Reduced from 500ms
     
     auto [session1, session2, session3] = createAndConnectClients(client_target_ports);
     
     logger_->log("Allowing NotificationHandler to register all clients (ensures complete notifications)...");
+    logger_->log("*** SLEEPING for 100ms for client registration ***");
     std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Reduced from 200ms
     
     // Send two rounds of messages
@@ -255,12 +258,15 @@ void MultiClientNotificationTest::sendMessageRounds(
     logger_->log("Sending first round of messages...");
     session1->write(ConstBuffer(message1.data(), message1.size()), std::chrono::milliseconds(1000));
     logger_->log("Brief pause to ensure sequential proxy chain processing...");
+    logger_->log("*** SLEEPING for 100ms for sequential processing ***");
     std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Reduced from 200ms
     session2->write(ConstBuffer(message2.data(), message2.size()), std::chrono::milliseconds(1000));
+    logger_->log("*** SLEEPING for 100ms for sequential processing ***");
     std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Reduced from 200ms
     session3->write(ConstBuffer(message3.data(), message3.size()), std::chrono::milliseconds(1000));
     
     logger_->log("Ensuring all proxy connections are established before second round...");
+    logger_->log("*** SLEEPING for 500ms for connection establishment ***");
     std::this_thread::sleep_for(std::chrono::milliseconds(500)); // Reduced from 1000ms
     
     // Second round messages
@@ -270,12 +276,15 @@ void MultiClientNotificationTest::sendMessageRounds(
     
     logger_->log("Sending second round of messages...");
     session1->write(ConstBuffer(message1_round2.data(), message1_round2.size()), std::chrono::milliseconds(1000));
+    logger_->log("*** SLEEPING for 100ms for sequential processing ***");
     std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Reduced from 200ms
     session2->write(ConstBuffer(message2_round2.data(), message2_round2.size()), std::chrono::milliseconds(1000));
+    logger_->log("*** SLEEPING for 100ms for sequential processing ***");
     std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Reduced from 200ms
     session3->write(ConstBuffer(message3_round2.data(), message3_round2.size()), std::chrono::milliseconds(1000));
     
     logger_->log("Allowing time for all notifications to propagate through proxy chain...");
+    logger_->log("*** SLEEPING for 500ms for notification propagation ***");
     std::this_thread::sleep_for(std::chrono::milliseconds(500)); // Reduced from 1000ms
 }
 

@@ -47,7 +47,7 @@ $(BIN_DIR) $(OBJ_DIR):
 LIBLOGGER_SRCS := $(shell find src/liblogger -name '*.cpp')
 LIBLOGGER_OBJS := $(patsubst src/%.cpp,$(OBJ_DIR)/%.o,$(LIBLOGGER_SRCS))
 LIBLOGGER := $(BIN_DIR)/liblogger.$(SO_EXT)
-$(LIBLOGGER): $(LIBLOGGER_OBJS) $(LIBACETOOLS) | $(BIN_DIR)
+$(LIBLOGGER): $(LIBLOGGER_OBJS) | $(BIN_DIR)
 	$(CXX) -shared -o $@ $^ $(LDFLAGS) -L$(BIN_DIR)
 
 # libacetools
@@ -98,8 +98,8 @@ $(LIBARGSPARSER): $(LIBARGSPARSER_OBJS) $(LIBACETOOLS) | $(BIN_DIR)
 TCPCLIENT_APP_SRCS := $(shell find src/tcpclient -name '*.cpp')
 TCPCLIENT_APP_OBJS := $(patsubst src/%.cpp,$(OBJ_DIR)/%.o,$(TCPCLIENT_APP_SRCS))
 TCPCLIENT := $(BIN_DIR)/tcpclient
-$(TCPCLIENT): $(TCPCLIENT_APP_OBJS) $(LIBTCP) $(LIBACETOOLS) $(LIBLOGGER) | $(BIN_DIR)
-	$(CXX) -o $@ $^ $(LDFLAGS) -L$(BIN_DIR) -ltcp -llogger
+$(TCPCLIENT): $(TCPCLIENT_APP_OBJS) $(LIBTCP) $(LIBARGSPARSER) $(LIBACETOOLS) $(LIBLOGGER) | $(BIN_DIR)
+	$(CXX) -o $@ $^ $(LDFLAGS) -L$(BIN_DIR) -ltcp -largsparser -lacetools -llogger
 
 # tcp_echo_server executable
 TCP_ECHO_SERVER_APP_SRCS := $(shell find src/tcp_echo_server -name '*.cpp')
@@ -119,22 +119,22 @@ $(UDP_ECHO_SERVER): $(UDP_ECHO_SERVER_APP_OBJS) $(LIBUDP) $(LIBARGSPARSER) $(LIB
 TCPCLIENTPROXY_APP_SRCS := $(shell find src/tcpclientproxy -name '*.cpp')
 TCPCLIENTPROXY_APP_OBJS := $(patsubst src/%.cpp,$(OBJ_DIR)/%.o,$(TCPCLIENTPROXY_APP_SRCS))
 TCPCLIENTPROXY := $(BIN_DIR)/tcpclientproxy
-$(TCPCLIENTPROXY): $(TCPCLIENTPROXY_APP_OBJS) $(LIBTCPCLIENTPROXY) $(LIBARGSPARSER) $(LIBACETOOLS) $(LIBLOGGER) | $(BIN_DIR)
-	$(CXX) -o $@ $^ $(LDFLAGS) -L$(BIN_DIR) -ltcpclientproxy -largsparser -lacetools -llogger
+$(TCPCLIENTPROXY): $(TCPCLIENTPROXY_APP_OBJS) $(LIBTCPCLIENTPROXY) $(LIBTCP) $(LIBUDP) $(LIBARGSPARSER) $(LIBACETOOLS) $(LIBLOGGER) | $(BIN_DIR)
+	$(CXX) -o $@ $^ $(LDFLAGS) -L$(BIN_DIR) -ltcpclientproxy -ltcp -ludp -largsparser -lacetools -llogger
 
 # tcpserverproxy executable
 TCPSERVERPROXY_APP_SRCS := $(shell find src/tcpserverproxy -name '*.cpp')
 TCPSERVERPROXY_APP_OBJS := $(patsubst src/%.cpp,$(OBJ_DIR)/%.o,$(TCPSERVERPROXY_APP_SRCS))
 TCPSERVERPROXY := $(BIN_DIR)/tcpserverproxy
-$(TCPSERVERPROXY): $(TCPSERVERPROXY_APP_OBJS) $(LIBTCPSERVERPROXY) $(LIBARGSPARSER) $(LIBACETOOLS) $(LIBLOGGER) | $(BIN_DIR)
-	$(CXX) -o $@ $^ $(LDFLAGS) -L$(BIN_DIR) -ltcpserverproxy -largsparser -lacetools -llogger
+$(TCPSERVERPROXY): $(TCPSERVERPROXY_APP_OBJS) $(LIBTCPSERVERPROXY) $(LIBTCP) $(LIBUDP) $(LIBARGSPARSER) $(LIBACETOOLS) $(LIBLOGGER) | $(BIN_DIR)
+	$(CXX) -o $@ $^ $(LDFLAGS) -L$(BIN_DIR) -ltcpserverproxy -ltcp -ludp -largsparser -lacetools -llogger
 
 # tests executable
 TEST_SRCS := $(shell find src/tests -name '*.cpp')
 TEST_OBJS := $(patsubst src/%.cpp,$(OBJ_DIR)/%.o,$(TEST_SRCS))
 TESTS := $(BIN_DIR)/tests
-$(TESTS): $(TEST_OBJS) $(LIBTCP) $(LIBUDP) $(LIBACETOOLS) $(LIBTCPCLIENTPROXY) $(LIBTCPSERVERPROXY) $(LIBLOGGER) | $(BIN_DIR)
-	$(CXX) -o $@ $^ $(LDFLAGS) -L$(BIN_DIR) -ltcp -ludp -ltcpclientproxy -ltcpserverproxy -llogger $(GTEST_LIBS)
+$(TESTS): $(TEST_OBJS) $(LIBTCP) $(LIBUDP) $(LIBACETOOLS) $(LIBTCPCLIENTPROXY) $(LIBTCPSERVERPROXY) $(LIBARGSPARSER) $(LIBLOGGER) | $(BIN_DIR)
+	$(CXX) -o $@ $^ $(LDFLAGS) -L$(BIN_DIR) -ltcp -ludp -ltcpclientproxy -ltcpserverproxy -largsparser -lacetools -llogger $(GTEST_LIBS)
 
 # ================================
 # Default Target: Build Everything
@@ -189,3 +189,6 @@ killall:
 # Clean rule
 clean: killall
 	rm -rf $(OBJ_DIR) $(BIN_DIR)
+
+# Clean and rebuild everything
+rebuild: clean all

@@ -103,6 +103,7 @@ void LargeMessageTest::SetUp() {
 void LargeMessageTest::TearDown() {
     stopAllServers();
     logger_->log("TearDown: Allowing time for graceful cleanup...");
+    logger_->log("*** SLEEPING for 100ms for graceful cleanup ***");
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 }
 
@@ -153,6 +154,7 @@ std::vector<uint16_t> LargeMessageTest::setupProxyChain() {
     );
     
     logger_->log("Waiting for proxy chain to initialize...");
+    logger_->log("*** SLEEPING for 200ms for proxy chain initialization ***");
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
     
     return {TCP_SERVER_PROXY_PORT};
@@ -166,6 +168,7 @@ std::vector<uint16_t> LargeMessageTest::setupDirectConnection() {
     echoServer_ = tcp::start_tcp_server(*logger_, Endpoint::loop_back(TCP_SERVER_PORT), *echoHandler_);
     
     logger_->log("Waiting for server to initialize...");
+    logger_->log("*** SLEEPING for 200ms for server initialization ***");
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
     
     return {TCP_SERVER_PORT};
