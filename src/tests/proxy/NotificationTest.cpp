@@ -1,4 +1,5 @@
 #include "NotificationTest.h"
+#include "NotificationHandler.h"
 
 #include <libtcp/Exports.h>
 #include <libtcpclientproxy/Exports.h>
@@ -12,85 +13,30 @@
 
 #include <chrono>
 #include <thread>
-#include <unordered_map>
 #include <vector>
-#include <mutex>
 #include <string>
 #include <sstream>
 
-// Custom handler for multi-client notification test
-class NotificationHandler : public tcp::ITcpClientHandler {
-public:
-    explicit NotificationHandler(logger::ILogger& logger) : logger_(logger) {}
 
-    std::unique_ptr<ITask> handle_client(std::unique_ptr<tcp::ITcpSession> client_session) override {
-        std::shared_ptr shared_session = std::move(client_session);
-        
-        logger_.log("NotificationHandler: New client connected");
-        
-        // Add this session to our tracked sessions
-        {
-            std::lock_guard<std::mutex> lock(sessions_mutex_);
-            active_sessions_.push_back(shared_session);
-            logger_.log("NotificationHandler: Total active sessions: %zu", active_sessions_.size());
-        }
+// Test with direct connection (no proxies)
+TEST_F(MultiClientNotificationTest, DirectConnection) {
+    runNotificationTest(false);
+}
 
-        return std::make_unique<RunningTask>([shared_session, this](std::atomic<bool>& cancelled) {
-            OwnedBuffer buffer_in(1024);
+// Test with proxy chain
+TEST_F(MultiClientNotificationTest, ProxyChainWithNotifications) {
+    runNotificationTest(true);
+}
 
-            while (!cancelled) {
-                auto read_result = shared_session->read(buffer_in.view(), std::chrono::milliseconds(100));
-                
-                if (read_result.code == IOResultCode::Error || 
-                    read_result.code == IOResultCode::ConnectionClosed) {
-                    logger_.log("NotificationHandler: Client disconnected");
-                    break;
-                }
+// Test cross-client notifications with direct connection
+TEST_F(MultiClientNotificationTest, DirectConnectionWithCrossClientNotifications) {
+    runCrossClientNotificationTest(false);
+}
 
-                if (read_result.code == IOResultCode::Timeout) {
-                    continue;
-                }
-
-                std::string received_message(buffer_in.view().data, read_result.count);
-                logger_.log("NotificationHandler: Received message: '%s'", received_message.c_str());
-                
-                // Send echo response to the sender
-                std::string echo_response = "echo " + received_message;
-                ConstBuffer echo_buffer(echo_response.data(), echo_response.size());
-                auto echo_result = shared_session->write(echo_buffer, std::chrono::milliseconds(100));
-                logger_.log("NotificationHandler: Sent echo response to sender");
-                
-                // Send notification to all OTHER clients
-                std::string notification = "notify " + received_message;
-                ConstBuffer notify_buffer(notification.data(), notification.size());
-                
-                std::lock_guard<std::mutex> lock(sessions_mutex_);
-                logger_.log("NotificationHandler: Sending notifications to %zu other clients", active_sessions_.size() - 1);
-                for (auto& session : active_sessions_) {
-                    if (session.get() != shared_session.get()) {
-                        auto notify_result = session->write(notify_buffer, std::chrono::milliseconds(100));
-                        logger_.log("NotificationHandler: Sent notification to other client");
-                    }
-                }
-            }
-            
-            // Remove this session from active sessions when done
-            {
-                std::lock_guard<std::mutex> lock(sessions_mutex_);
-                auto it = std::find(active_sessions_.begin(), active_sessions_.end(), shared_session);
-                if (it != active_sessions_.end()) {
-                    active_sessions_.erase(it);
-                    logger_.log("NotificationHandler: Removed session, remaining: %zu", active_sessions_.size());
-                }
-            }
-        });
-    }
-
-private:
-    logger::ILogger& logger_;
-    std::vector<std::shared_ptr<tcp::ITcpSession>> active_sessions_;
-    std::mutex sessions_mutex_;
-};
+// Test cross-client notifications with proxy chain
+TEST_F(MultiClientNotificationTest, ProxyChainWithCrossClientNotifications) {
+    runCrossClientNotificationTest(true);
+}
 
 void MultiClientNotificationTest::SetUp() {
     logger_ = logger::create_console_logger();
@@ -98,6 +44,7 @@ void MultiClientNotificationTest::SetUp() {
 
 void MultiClientNotificationTest::TearDown() {
     stopAllServers();
+    logger_->log("TearDown: Allowing time for graceful cleanup...");
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 }
 
@@ -220,8 +167,8 @@ void MultiClientNotificationTest::runNotificationTest(bool useProxies) {
         ? setupProxyChain(false)  // Use echo handler
         : setupDirectConnection(false);
     
-    logger_->log("Waiting for servers to start...");
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    logger_->log("Waiting for servers to initialize (necessary for proxy chain setup)...");
+    std::this_thread::sleep_for(std::chrono::milliseconds(200)); // Reduced from 500ms
     
     logger_->log("Creating and connecting clients...");
     auto [session1, session2, session3] = createAndConnectClients(client_target_ports);
@@ -275,12 +222,13 @@ void MultiClientNotificationTest::runCrossClientNotificationTest(bool useProxies
         ? setupProxyChain(true)  // Use notification handler
         : setupDirectConnection(true);
     
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    logger_->log("Waiting for server chain to stabilize (required for multi-proxy coordination)...");
+    std::this_thread::sleep_for(std::chrono::milliseconds(300)); // Reduced from 500ms
     
     auto [session1, session2, session3] = createAndConnectClients(client_target_ports);
     
-    // Give time for all clients to connect and be registered by NotificationHandler
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    logger_->log("Allowing NotificationHandler to register all clients (ensures complete notifications)...");
+    std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Reduced from 200ms
     
     // Send two rounds of messages
     sendMessageRounds(session1, session2, session3);
@@ -306,12 +254,14 @@ void MultiClientNotificationTest::sendMessageRounds(
     
     logger_->log("Sending first round of messages...");
     session1->write(ConstBuffer(message1.data(), message1.size()), std::chrono::milliseconds(1000));
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    logger_->log("Brief pause to ensure sequential proxy chain processing...");
+    std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Reduced from 200ms
     session2->write(ConstBuffer(message2.data(), message2.size()), std::chrono::milliseconds(1000));
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Reduced from 200ms
     session3->write(ConstBuffer(message3.data(), message3.size()), std::chrono::milliseconds(1000));
     
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    logger_->log("Ensuring all proxy connections are established before second round...");
+    std::this_thread::sleep_for(std::chrono::milliseconds(500)); // Reduced from 1000ms
     
     // Second round messages
     std::string message1_round2 = "second message from client 1";
@@ -320,12 +270,13 @@ void MultiClientNotificationTest::sendMessageRounds(
     
     logger_->log("Sending second round of messages...");
     session1->write(ConstBuffer(message1_round2.data(), message1_round2.size()), std::chrono::milliseconds(1000));
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Reduced from 200ms
     session2->write(ConstBuffer(message2_round2.data(), message2_round2.size()), std::chrono::milliseconds(1000));
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Reduced from 200ms
     session3->write(ConstBuffer(message3_round2.data(), message3_round2.size()), std::chrono::milliseconds(1000));
     
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    logger_->log("Allowing time for all notifications to propagate through proxy chain...");
+    std::this_thread::sleep_for(std::chrono::milliseconds(500)); // Reduced from 1000ms
 }
 
 std::tuple<std::string, std::string, std::string> MultiClientNotificationTest::readAllMessages(
@@ -426,23 +377,3 @@ void MultiClientNotificationTest::verifyNotifications(
     ASSERT_TRUE(client3_combined.find("notify " + message1_round2) != std::string::npos);
     ASSERT_TRUE(client3_combined.find("notify " + message2_round2) != std::string::npos);
 }
-
-// Test with direct connection (no proxies)
-TEST_F(MultiClientNotificationTest, DirectConnection) {
-    runNotificationTest(false);
-}
-
-// Test with proxy chain  
-TEST_F(MultiClientNotificationTest, ProxyChainWithNotifications) {
-    runNotificationTest(true);
-}
-
-// Test cross-client notifications with direct connection
-TEST_F(MultiClientNotificationTest, DirectConnectionWithCrossClientNotifications) {
-    runCrossClientNotificationTest(false);
-}
-
-// Test cross-client notifications with proxy chain
-TEST_F(MultiClientNotificationTest, ProxyChainWithCrossClientNotifications) {
-    runCrossClientNotificationTest(true);
-} 
