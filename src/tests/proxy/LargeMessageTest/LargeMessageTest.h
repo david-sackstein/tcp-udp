@@ -30,7 +30,7 @@ private:
     std::shared_ptr<tcp::ITcpSession> createAndConnectClient(uint16_t target_port);
     
     // Message generation and verification
-    std::string generateLargeMessage(size_t size);
+    std::string generateLargeMessage(size_t size) const;
     bool verifyMessageIntegrity(const std::string& original, const std::string& received);
     
     // Port constants
