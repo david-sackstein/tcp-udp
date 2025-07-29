@@ -341,7 +341,7 @@ std::tuple<std::string, std::string, std::string> MultiClientNotificationTest::r
 void MultiClientNotificationTest::logReceivedMessages(
     const std::vector<std::string>& client1_messages,
     const std::vector<std::string>& client2_messages,
-    const std::vector<std::string>& client3_messages) {
+    const std::vector<std::string>& client3_messages) const {
     
     logger_->log(logger::LogLevel::INFO, "Client 1 received %zu messages", client1_messages.size());
     for (const auto& msg : client1_messages) {
@@ -362,7 +362,7 @@ void MultiClientNotificationTest::logReceivedMessages(
 void MultiClientNotificationTest::verifyNotifications(
     const std::string& client1_combined,
     const std::string& client2_combined,
-    const std::string& client3_combined) {
+    const std::string& client3_combined) const {
     
     // Second round message strings
     std::string message1_round2 = "second message from client 1";

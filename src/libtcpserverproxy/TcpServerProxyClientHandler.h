@@ -13,7 +13,7 @@
 // Forward declaration
 class TcpServerProxyUdpHandler;
 
-class TcpServerProxyClientHandler : public tcp::ITcpClientHandler {
+class TcpServerProxyClientHandler final : public tcp::ITcpClientHandler {
 public:
     TcpServerProxyClientHandler(
         logger::ILogger& logger,

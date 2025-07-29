@@ -6,7 +6,7 @@
 #include <thread>
 #include <memory>
 
-class BackgroundServer : public IBackgroundServer {
+class BackgroundServer final : public IBackgroundServer {
 public:
     std::thread thread_;
     std::shared_ptr<IBlockingServer> server_;

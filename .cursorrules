@@ -11,4 +11,9 @@
 - Use RAII principles
 - Prefer smart pointers over raw pointers
 - Use const correctness where possible
-- Minimize header dependencies 
+- Minimize header dependencies
+
+## Header Management
+- When a type is referenced as pointer or reference in a header and is part of the private definition of the class, use forward declaration
+- If a type is part of the public API (method parameters, return types, public members), include the header that defines the type
+- Only include headers for types that are actually used in the header file (not just declared) 

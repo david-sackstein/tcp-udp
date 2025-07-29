@@ -9,7 +9,7 @@
 #include <mutex>
 
 // Custom handler for multi-client notification test
-class NotificationHandler : public tcp::ITcpClientHandler {
+class NotificationHandler final : public tcp::ITcpClientHandler {
 public:
     explicit NotificationHandler(logger::ILogger& logger);
 

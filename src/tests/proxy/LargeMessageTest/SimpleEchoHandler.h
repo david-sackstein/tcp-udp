@@ -7,7 +7,7 @@
 #include <memory>
 
 // Simple echo handler that echoes back the exact message without any prefix
-class SimpleEchoHandler : public tcp::ITcpClientHandler {
+class SimpleEchoHandler final : public tcp::ITcpClientHandler {
 public:
     explicit SimpleEchoHandler(logger::ILogger& logger);
 

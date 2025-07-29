@@ -2,10 +2,9 @@
 
 #include <libacetools/ISignalRegistration.h>
 
-#include <ace/Reactor.h>
 #include <ace/Event_Handler.h>
 
-class SignalRegistration : public ISignalRegistration, public ACE_Event_Handler {
+class SignalRegistration final : public ISignalRegistration, public ACE_Event_Handler {
 public:
     explicit SignalRegistration(ACE_Reactor* reactor);
     ~SignalRegistration() override;

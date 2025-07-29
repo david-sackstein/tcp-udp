@@ -9,7 +9,7 @@
 
 using msec = std::chrono::milliseconds;
 
-class SocketIO : public ISocketIO {
+class SocketIO final : public ISocketIO {
 public:
     // TCP methods
     IOResult read(ACE_SOCK_Stream &socket, Buffer buffer, msec timeout) override;

@@ -41,12 +41,12 @@ private:
     void logReceivedMessages(
         const std::vector<std::string>& client1_messages,
         const std::vector<std::string>& client2_messages,
-        const std::vector<std::string>& client3_messages);
+        const std::vector<std::string>& client3_messages) const;
     
     void verifyNotifications(
         const std::string& client1_combined,
         const std::string& client2_combined,
-        const std::string& client3_combined);
+        const std::string& client3_combined) const;
 
     // Port constants
     const uint16_t TCP_CLIENT1_PORT = 16000;
