@@ -179,6 +179,10 @@ udptest: $(TESTS)
 notificationtest: $(TESTS)
 	GTEST_FILTER=MultiClientNotificationTest.* ./$(TESTS)
 
+# Run only the large message test
+largemessagetest: $(TESTS)
+	GTEST_FILTER=LargeMessageTest.* ./$(TESTS)
+
 killall:
 	sudo lsof -i :15001 -i :15002 -i :15003 -sTCP:LISTEN -t | xargs -r sudo kill -9
 
