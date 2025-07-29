@@ -70,16 +70,16 @@ TEST_F(ProxyChainTest, StressTest) {
 
         // Progress indicator every 1000 requests
         if (i % 1000 == 0) {
-            logger_->log("StressTest: Completed %d/%d requests", i, num_requests);
+            logger_->log(logger::LogLevel::INFO, "StressTest: Completed %d/%d requests", i, num_requests);
         }
     }
 
-    logger_->log("StressTest: All %d requests completed successfully", num_requests);
+    logger_->log(logger::LogLevel::INFO, "StressTest: All %d requests completed successfully", num_requests);
     client->disconnect();
 }
 
 void ProxyChainTest::SetUp() {
-    logger_ = logger::create_console_logger();
+    logger_ = logger::create_console_logger(logger::LogLevel::ERROR);
     client_handler_ = tcp::create_tcp_echo_handler(*logger_);
 
     serverProxy_ = server_proxy::start_tcp_server_proxy(

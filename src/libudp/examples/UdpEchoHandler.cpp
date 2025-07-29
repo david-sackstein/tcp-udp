@@ -17,12 +17,12 @@ std::unique_ptr<ITask> UdpEchoHandler::handle_client(udp::IUdpSession& client_se
     IOResult result = client_session.read_from(buffer.view(), sender, std::chrono::milliseconds(1000));
     
     if (result.code == IOResultCode::Error) {
-        logger_.log("UdpEchoHandler: failed to read: %s", result.error_message.c_str());
+        logger_.log(logger::LogLevel::ERROR, "UdpEchoHandler: failed to read: %s", result.error_message.c_str());
         return std::make_unique<CompletedTask>();
     }
     
     if (result.code == IOResultCode::ConnectionClosed) {
-        logger_.log("UdpEchoHandler: read ConnectionClosed");
+        logger_.log(logger::LogLevel::INFO, "UdpEchoHandler: read ConnectionClosed");
         return std::make_unique<CompletedTask>();
     }
     
@@ -37,19 +37,19 @@ std::unique_ptr<ITask> UdpEchoHandler::handle_client(udp::IUdpSession& client_se
     
     IOResult write_result = client_session.write_to(response_buffer, sender, std::chrono::milliseconds(1000));
 
-    logger_.log("UdpEchoHandler: %s received: '%s', echoing back: '%s' to %s",
+            logger_.log(logger::LogLevel::INFO, "UdpEchoHandler: %s received: '%s', echoing back: '%s' to %s",
         sender.to_string().c_str(),
         received_msg.c_str(),
         echo_msg.c_str(),
         sender.to_string().c_str());
         
     if (write_result.code == IOResultCode::Error) {
-        logger_.log("UdpEchoHandler: failed to write: %s", write_result.error_message.c_str());
+        logger_.log(logger::LogLevel::ERROR, "UdpEchoHandler: failed to write: %s", write_result.error_message.c_str());
         return std::make_unique<CompletedTask>();
     }
     
     if (write_result.code == IOResultCode::ConnectionClosed) {
-        logger_.log("UdpEchoHandler: write ConnectionClosed");
+        logger_.log(logger::LogLevel::INFO, "UdpEchoHandler: write ConnectionClosed");
         return std::make_unique<CompletedTask>();
     }
     

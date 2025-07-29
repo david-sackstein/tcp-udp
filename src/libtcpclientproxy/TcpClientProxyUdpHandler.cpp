@@ -28,7 +28,7 @@ std::unique_ptr<ITask> TcpClientProxyUdpHandler::handle_client(udp::IUdpSession&
 
         return nullptr;
     } catch (std::runtime_error& e) {
-        logger_.log("TcpClientProxyUdpHandler: Exception: %s", e.what());
+        logger_.log(logger::LogLevel::ERROR, "TcpClientProxyUdpHandler: Exception: %s", e.what());
         return nullptr;
     }
 }
@@ -74,7 +74,7 @@ ConstBuffer TcpClientProxyUdpHandler::read_udp_message(
     }
 
     if (udp_read_result.code == IOResultCode::ConnectionClosed) {
-        logger_.log("TcpClientProxyUdpHandler: %s read UDP ConnectionClosed", udp_sender.to_string().c_str());
+        logger_.log(logger::LogLevel::INFO, "TcpClientProxyUdpHandler: %s read UDP ConnectionClosed", udp_sender.to_string().c_str());
         return {};
     }
 
@@ -98,7 +98,7 @@ void TcpClientProxyUdpHandler::send_to_tcp_server(
     }
     
     if (tcp_send_result.code == IOResultCode::ConnectionClosed) {
-        logger_.log("TcpClientProxyUdpHandler: %s write TCP ConnectionClosed", udp_sender.to_string().c_str());
+        logger_.log(logger::LogLevel::INFO, "TcpClientProxyUdpHandler: %s write TCP ConnectionClosed", udp_sender.to_string().c_str());
         return;
     }
     
@@ -120,7 +120,7 @@ void TcpClientProxyUdpHandler::send_response_to_udp(
     }
     
     if (udp_write_result.code == IOResultCode::ConnectionClosed) {
-        logger_.log("TcpClientProxyUdpHandler: %s write UDP ConnectionClosed", udp_sender.to_string().c_str());
+        logger_.log(logger::LogLevel::INFO, "TcpClientProxyUdpHandler: %s write UDP ConnectionClosed", udp_sender.to_string().c_str());
         return;
     }
     

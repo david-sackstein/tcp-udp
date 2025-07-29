@@ -36,9 +36,9 @@ void TcpServerProxy::start() {
     // Register UDP client socket with reactor for receiving responses
     if (reactor_->register_handler(this, ACE_Event_Handler::READ_MASK) == 0) {
         reactor_registered_ = true;
-        logger_.log("TcpServerProxy: Registered UDP client socket with reactor");
+        logger_.log(logger::LogLevel::INFO, "TcpServerProxy: Registered UDP client socket with reactor");
     } else {
-        logger_.log("TcpServerProxy: Failed to register UDP client socket with reactor");
+        logger_.log(logger::LogLevel::ERROR, "TcpServerProxy: Failed to register UDP client socket with reactor");
     }
     
     // Create TCP server with shared reactor

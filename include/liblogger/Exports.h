@@ -7,7 +7,7 @@
 
 namespace logger {
 
-EXPORTED std::unique_ptr<ILogger> create_console_logger();
-EXPORTED std::unique_ptr<ILogger> create_file_logger(const std::string& filename);
+EXPORTED std::unique_ptr<ILogger> create_console_logger(LogLevel level);
+EXPORTED std::unique_ptr<ILogger> create_file_logger(LogLevel level, const std::string& filename);
 
 } 

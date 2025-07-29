@@ -18,7 +18,7 @@ IOResult AceUdpClientSession::read_from(Buffer buffer, Endpoint& sender, std::ch
 
     if (result.code == IOResultCode::Success && result.count > 0) {
         sender = to_endpoint(sender_addr);
-        logger_.log("UdpClientSession: <- %s received: '%s'",
+        logger_.log(logger::LogLevel::INFO, "UdpClientSession: <- %s received: '%s'",
                sender.to_string().c_str(),
                std::string(buffer.data, result.count).c_str());
     }
@@ -31,7 +31,7 @@ IOResult AceUdpClientSession::write_to(ConstBuffer buffer, const Endpoint& remot
     IOResult result = io_.write(server_socket_, buffer, dest_addr, timeout);
 
     if (result.code == IOResultCode::Success && result.count > 0) {
-        logger_.log("UdpClientSession: -> %s sent: '%s'",
+        logger_.log(logger::LogLevel::INFO, "UdpClientSession: -> %s sent: '%s'",
                remote.to_string().c_str(),
                std::string(buffer.data, result.count).c_str());
     }

@@ -23,12 +23,12 @@ std::unique_ptr<ITask> SimpleEchoHandler::handle_client(std::unique_ptr<tcp::ITc
             auto read_result = shared_session->read(buffer_in.view(), std::chrono::milliseconds(100));
             
             if (read_result.code == IOResultCode::Error) {
-                shared_this->logger_.log("SimpleEchoHandler: failed to read: %s", read_result.error_message.c_str());
+                shared_this->logger_.log(logger::LogLevel::ERROR, "SimpleEchoHandler: failed to read: %s", read_result.error_message.c_str());
                 break;
             }
 
             if (read_result.code == IOResultCode::ConnectionClosed) {
-                shared_this->logger_.log("SimpleEchoHandler: read ConnectionClosed");
+                shared_this->logger_.log(logger::LogLevel::INFO, "SimpleEchoHandler: read ConnectionClosed");
                 break;
             }
 
@@ -42,12 +42,12 @@ std::unique_ptr<ITask> SimpleEchoHandler::handle_client(std::unique_ptr<tcp::ITc
             auto write_result = shared_session->write(buffer_out, std::chrono::milliseconds(100));
             
             if (write_result.code == IOResultCode::Error) {
-                shared_this->logger_.log("SimpleEchoHandler: failed to write: %s", write_result.error_message.c_str());
+                shared_this->logger_.log(logger::LogLevel::ERROR, "SimpleEchoHandler: failed to write: %s", write_result.error_message.c_str());
                 break;
             }
 
             if (write_result.code == IOResultCode::ConnectionClosed) {
-                shared_this->logger_.log("SimpleEchoHandler: write ConnectionClosed");
+                shared_this->logger_.log(logger::LogLevel::INFO, "SimpleEchoHandler: write ConnectionClosed");
                 break;
             }
 

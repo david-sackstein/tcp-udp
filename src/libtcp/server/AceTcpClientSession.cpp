@@ -27,7 +27,7 @@ IOResult AceTcpClientSession::read(Buffer buffer, std::chrono::milliseconds time
     IOResult result = io_.read(client_sock_, buffer, timeout);
 
     if (result.code == IOResultCode::Success && result.count > 0) {
-        logger_.log("TcpClientSession: %s <- %s received: '%s'",
+        logger_.log(logger::LogLevel::INFO, "TcpClientSession: %s <- %s received: '%s'",
                endpoint_pair_.local.to_string().c_str(),
                endpoint_pair_.remote.to_string().c_str(),
                std::string(buffer.data, result.count).c_str());
@@ -41,7 +41,7 @@ IOResult AceTcpClientSession::write(ConstBuffer buffer, std::chrono::millisecond
     IOResult result = io_.write(client_sock_, buffer, timeout);
 
     if (result.code == IOResultCode::Success && result.count > 0) {
-        logger_.log("TcpClientSession: %s -> %s sent: '%s'",
+        logger_.log(logger::LogLevel::INFO, "TcpClientSession: %s -> %s sent: '%s'",
                endpoint_pair_.local.to_string().c_str(),
                endpoint_pair_.remote.to_string().c_str(),
                std::string(buffer.data, result.count).c_str());

@@ -36,7 +36,7 @@ void TcpClientServerTest::runTest() {
 }
 
 void TcpClientServerTest::SetUp() {
-    logger_ = logger::create_console_logger();
+    logger_ = logger::create_console_logger(logger::LogLevel::ERROR);
     client_handler_ = tcp::create_tcp_echo_handler(*logger_);
     server_ = tcp::start_tcp_server(*logger_, Endpoint::any_loop_back(), *client_handler_);
 }

@@ -43,21 +43,21 @@ TEST_F(LargeMessageTest, ProxyChain_VeryLargeMessage) {
 }
 
 void LargeMessageTest::SetUp() {
-    logger_ = logger::create_console_logger();
+    logger_ = logger::create_console_logger(logger::LogLevel::ERROR);
 }
 
 void LargeMessageTest::TearDown() {
     stopAllServers();
-    logger_->log("TearDown: Allowing time for graceful cleanup...");
-    logger_->log("SLEEPING for 100ms for graceful cleanup");
+    logger_->log(logger::LogLevel::INFO, "TearDown: Allowing time for graceful cleanup...");
+    logger_->log(logger::LogLevel::INFO, "SLEEPING for 100ms for graceful cleanup");
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 }
 
 void LargeMessageTest::stopAllServers() {
-    logger_->log("TearDown: Stopping all servers and clients");
+    logger_->log(logger::LogLevel::INFO, "TearDown: Stopping all servers and clients");
     
     if (client_) {
-        logger_->log("TearDown: Disconnecting client");
+        logger_->log(logger::LogLevel::INFO, "TearDown: Disconnecting client");
         client_->disconnect();
         client_.reset();
     }
@@ -79,7 +79,7 @@ void LargeMessageTest::stopAllServers() {
 }
 
 std::vector<uint16_t> LargeMessageTest::setupProxyChain() {
-    logger_->log("Setting up proxy chain: client -> server_proxy -> client_proxy -> echo_server");
+    logger_->log(logger::LogLevel::INFO, "Setting up proxy chain: client -> server_proxy -> client_proxy -> echo_server");
     
     // Create echo server with simple echo handler
     echoHandler_ = std::make_unique<SimpleEchoHandler>(*logger_);
@@ -99,32 +99,32 @@ std::vector<uint16_t> LargeMessageTest::setupProxyChain() {
         Endpoint::loop_back(TCP_CLIENT_PROXY_PORT)
     );
     
-    logger_->log("Waiting for proxy chain to initialize...");
-    logger_->log("SLEEPING for 200ms for proxy chain initialization");
+    logger_->log(logger::LogLevel::INFO, "Waiting for proxy chain to initialize...");
+    logger_->log(logger::LogLevel::INFO, "SLEEPING for 200ms for proxy chain initialization");
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
     
     return {TCP_SERVER_PROXY_PORT};
 }
 
 std::vector<uint16_t> LargeMessageTest::setupDirectConnection() {
-    logger_->log("Setting up direct connection: client -> echo_server");
+    logger_->log(logger::LogLevel::INFO, "Setting up direct connection: client -> echo_server");
     
     // Create echo server with simple echo handler
     echoHandler_ = std::make_unique<SimpleEchoHandler>(*logger_);
     echoServer_ = tcp::start_tcp_server(*logger_, Endpoint::loop_back(TCP_SERVER_PORT), *echoHandler_);
     
-    logger_->log("Waiting for server to initialize...");
-    logger_->log("SLEEPING for 200ms for server initialization");
+    logger_->log(logger::LogLevel::INFO, "Waiting for server to initialize...");
+    logger_->log(logger::LogLevel::INFO, "SLEEPING for 200ms for server initialization");
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
     
     return {TCP_SERVER_PORT};
 }
 
 std::shared_ptr<tcp::ITcpSession> LargeMessageTest::createAndConnectClient(uint16_t target_port) {
-    logger_->log("Creating TCP client");
+    logger_->log(logger::LogLevel::INFO, "Creating TCP client");
     client_ = std::unique_ptr<tcp::ITcpClient>(tcp::create_tcp_client(*logger_));
     
-    logger_->log("Connecting client from port %u to port %u", TCP_CLIENT_PORT, target_port);
+    logger_->log(logger::LogLevel::INFO, "Connecting client from port %u to port %u", TCP_CLIENT_PORT, target_port);
     auto session = client_->connect(
         Endpoint::loop_back(TCP_CLIENT_PORT),
         Endpoint::loop_back(target_port)
@@ -134,7 +134,7 @@ std::shared_ptr<tcp::ITcpSession> LargeMessageTest::createAndConnectClient(uint1
         throw std::runtime_error("Failed to connect client");
     }
     
-    logger_->log("Client connected successfully");
+    logger_->log(logger::LogLevel::INFO, "Client connected successfully");
     return session;
 }
 
@@ -159,24 +159,24 @@ std::string LargeMessageTest::generateLargeMessage(size_t size) const {
     }
     
     std::string result = oss.str();
-    logger_->log("Generated message of size %zu bytes (requested %zu)", result.length(), size);
+    logger_->log(logger::LogLevel::INFO, "Generated message of size %zu bytes (requested %zu)", result.length(), size);
     return result;
 }
 
 bool LargeMessageTest::verifyMessageIntegrity(const std::string& original, const std::string& received) {
     if (original.length() != received.length()) {
-        logger_->log("Message length mismatch: original=%zu, received=%zu", 
+        logger_->log(logger::LogLevel::ERROR, "Message length mismatch: original=%zu, received=%zu", 
                     original.length(), received.length());
         return false;
     }
     
     if (original != received) {
-        logger_->log("Message content mismatch");
+        logger_->log(logger::LogLevel::ERROR, "Message content mismatch");
         
         // Find first difference for debugging
         for (size_t i = 0; i < std::min(original.length(), received.length()); ++i) {
             if (original[i] != received[i]) {
-                logger_->log("First difference at position %zu: original='%c' received='%c'", 
+                logger_->log(logger::LogLevel::ERROR, "First difference at position %zu: original='%c' received='%c'", 
                             i, original[i], received[i]);
                 break;
             }
@@ -184,12 +184,12 @@ bool LargeMessageTest::verifyMessageIntegrity(const std::string& original, const
         return false;
     }
     
-    logger_->log("Message integrity verified: %zu bytes match exactly", original.length());
+    logger_->log(logger::LogLevel::INFO, "Message integrity verified: %zu bytes match exactly", original.length());
     return true;
 }
 
 void LargeMessageTest::runLargeMessageTest(bool useProxies, size_t messageSize) {
-    logger_->log("Starting large message test (useProxies=%s, size=%zu)", 
+    logger_->log(logger::LogLevel::INFO, "Starting large message test (useProxies=%s, size=%zu)", 
                 useProxies ? "true" : "false", messageSize);
     
     // Setup infrastructure
@@ -204,14 +204,14 @@ void LargeMessageTest::runLargeMessageTest(bool useProxies, size_t messageSize) 
     ASSERT_EQ(originalMessage.length(), messageSize);
     
     // Send message
-    logger_->log("Sending message of %zu bytes...", originalMessage.length());
+    logger_->log(logger::LogLevel::INFO, "Sending message of %zu bytes...", originalMessage.length());
     ConstBuffer send_buffer(originalMessage.data(), originalMessage.length());
     auto write_result = session->write(send_buffer, std::chrono::milliseconds(5000));
     ASSERT_EQ(write_result.code, IOResultCode::Success);
     ASSERT_EQ(write_result.count, messageSize);
     
     // Receive echo response
-    logger_->log("Reading echo response...");
+    logger_->log(logger::LogLevel::INFO, "Reading echo response...");
     OwnedBuffer receive_buffer(messageSize * 2); // Extra space to be safe
     std::string receivedMessage;
     size_t totalReceived = 0;
@@ -229,7 +229,7 @@ void LargeMessageTest::runLargeMessageTest(bool useProxies, size_t messageSize) 
         auto read_result = session->read(read_buffer, std::chrono::milliseconds(2000));
         
         if (read_result.code == IOResultCode::Timeout) {
-            logger_->log("Read timeout, received %zu/%zu bytes so far", totalReceived, expectedTotalSize);
+            logger_->log(logger::LogLevel::ERROR, "Read timeout, received %zu/%zu bytes so far", totalReceived, expectedTotalSize);
             continue;
         }
         
@@ -237,7 +237,7 @@ void LargeMessageTest::runLargeMessageTest(bool useProxies, size_t messageSize) 
         ASSERT_GT(read_result.count, 0u);
         
         totalReceived += read_result.count;
-        logger_->log("Read %zu bytes, total received: %zu/%zu", 
+        logger_->log(logger::LogLevel::INFO, "Read %zu bytes, total received: %zu/%zu", 
                     read_result.count, totalReceived, expectedTotalSize);
     }
     
@@ -250,6 +250,6 @@ void LargeMessageTest::runLargeMessageTest(bool useProxies, size_t messageSize) 
     // Verify message integrity
     ASSERT_TRUE(verifyMessageIntegrity(originalMessage, actualEchoContent));
     
-    logger_->log("Large message test completed successfully (useProxies=%s, size=%zu)", 
+    logger_->log(logger::LogLevel::INFO, "Large message test completed successfully (useProxies=%s, size=%zu)", 
                 useProxies ? "true" : "false", messageSize);
 } 

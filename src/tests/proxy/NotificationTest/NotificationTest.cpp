@@ -39,29 +39,29 @@ TEST_F(MultiClientNotificationTest, ProxyChainWithCrossClientNotifications) {
 }
 
 void MultiClientNotificationTest::SetUp() {
-    logger_ = logger::create_console_logger();
+    logger_ = logger::create_console_logger(logger::LogLevel::ERROR);
 }
 
 void MultiClientNotificationTest::TearDown() {
     stopAllServers();
-    logger_->log("TearDown: Allowing time for graceful cleanup...");
+    logger_->log(logger::LogLevel::INFO, "TearDown: Allowing time for graceful cleanup...");
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 }
 
 void MultiClientNotificationTest::stopAllServers() {
-    logger_->log("TearDown: Stopping all servers and clients");
+    logger_->log(logger::LogLevel::INFO, "TearDown: Stopping all servers and clients");
     
     // Disconnect clients first if they exist
     if (client1_) {
-        logger_->log("TearDown: Disconnecting client1");
+        logger_->log(logger::LogLevel::INFO, "TearDown: Disconnecting client1");
         client1_->disconnect();
     }
     if (client2_) {
-        logger_->log("TearDown: Disconnecting client2");
+        logger_->log(logger::LogLevel::INFO, "TearDown: Disconnecting client2");
         client2_->disconnect();
     }
     if (client3_) {
-        logger_->log("TearDown: Disconnecting client3");
+        logger_->log(logger::LogLevel::INFO, "TearDown: Disconnecting client3");
         client3_->disconnect();
     }
     
@@ -79,7 +79,7 @@ void MultiClientNotificationTest::stopAllServers() {
 }
 
 std::vector<uint16_t> MultiClientNotificationTest::setupProxyChain(bool useNotificationHandler) {
-    logger_->log("Setting up proxy chain: clients -> server_proxies -> %u -> %u", 
+    logger_->log(logger::LogLevel::INFO, "Setting up proxy chain: clients -> server_proxies -> %u -> %u", 
                 TCP_CLIENT_PROXY_PORT, TCP_SERVER_PORT);
     
     // Create TCP server with appropriate handler
@@ -119,7 +119,7 @@ std::vector<uint16_t> MultiClientNotificationTest::setupProxyChain(bool useNotif
 }
 
 std::vector<uint16_t> MultiClientNotificationTest::setupDirectConnection(bool useNotificationHandler) {
-    logger_->log("Setting up direct connection: clients -> %u", TCP_SERVER_PORT);
+    logger_->log(logger::LogLevel::INFO, "Setting up direct connection: clients -> %u", TCP_SERVER_PORT);
     
     // Create TCP server with appropriate handler
     if (useNotificationHandler) {
@@ -136,21 +136,21 @@ std::vector<uint16_t> MultiClientNotificationTest::setupDirectConnection(bool us
 }
 
 std::array<std::shared_ptr<tcp::ITcpSession>, 3> MultiClientNotificationTest::createAndConnectClients(const std::vector<uint16_t>& target_ports) {
-    logger_->log("Creating TCP clients");
+    logger_->log(logger::LogLevel::INFO, "Creating TCP clients");
     client1_ = tcp::create_tcp_client(*logger_);
     client2_ = tcp::create_tcp_client(*logger_);
     client3_ = tcp::create_tcp_client(*logger_);
     
-    logger_->log("Connecting client1 from port %u to port %u", TCP_CLIENT1_PORT, target_ports[0]);
+    logger_->log(logger::LogLevel::INFO, "Connecting client1 from port %u to port %u", TCP_CLIENT1_PORT, target_ports[0]);
     auto session1 = client1_->connect(Endpoint::loop_back(TCP_CLIENT1_PORT), Endpoint::loop_back(target_ports[0]));
-    logger_->log("Connecting client2 from port %u to port %u", TCP_CLIENT2_PORT, target_ports[1]);
+    logger_->log(logger::LogLevel::INFO, "Connecting client2 from port %u to port %u", TCP_CLIENT2_PORT, target_ports[1]);
     auto session2 = client2_->connect(Endpoint::loop_back(TCP_CLIENT2_PORT), Endpoint::loop_back(target_ports[1]));
-    logger_->log("Connecting client3 from port %u to port %u", TCP_CLIENT3_PORT, target_ports[2]);
+    logger_->log(logger::LogLevel::INFO, "Connecting client3 from port %u to port %u", TCP_CLIENT3_PORT, target_ports[2]);
     auto session3 = client3_->connect(Endpoint::loop_back(TCP_CLIENT3_PORT), Endpoint::loop_back(target_ports[2]));
     
-    logger_->log("Session1 valid: %s", session1 ? "true" : "false");
-    logger_->log("Session2 valid: %s", session2 ? "true" : "false");
-    logger_->log("Session3 valid: %s", session3 ? "true" : "false");
+    logger_->log(logger::LogLevel::INFO, "Session1 valid: %s", session1 ? "true" : "false");
+    logger_->log(logger::LogLevel::INFO, "Session2 valid: %s", session2 ? "true" : "false");
+    logger_->log(logger::LogLevel::INFO, "Session3 valid: %s", session3 ? "true" : "false");
     
     EXPECT_TRUE(session1);
     EXPECT_TRUE(session2);
@@ -160,33 +160,33 @@ std::array<std::shared_ptr<tcp::ITcpSession>, 3> MultiClientNotificationTest::cr
 }
 
 void MultiClientNotificationTest::runNotificationTest(bool useProxies) {
-    logger_->log("Starting notification test (useProxies=%s)", useProxies ? "true" : "false");
+    logger_->log(logger::LogLevel::INFO, "Starting notification test (useProxies=%s)", useProxies ? "true" : "false");
     
-    logger_->log("Setting up server architecture...");
+    logger_->log(logger::LogLevel::INFO, "Setting up server architecture...");
     std::vector<uint16_t> client_target_ports = useProxies 
         ? setupProxyChain(false)  // Use echo handler
         : setupDirectConnection(false);
     
-    logger_->log("Waiting for servers to initialize (necessary for proxy chain setup)...");
-    logger_->log("SLEEPING for 200ms for server initialization");
+    logger_->log(logger::LogLevel::INFO, "Waiting for servers to initialize (necessary for proxy chain setup)...");
+    logger_->log(logger::LogLevel::INFO, "SLEEPING for 200ms for server initialization");
     std::this_thread::sleep_for(std::chrono::milliseconds(200)); // Reduced from 500ms
     
-    logger_->log("Creating and connecting clients...");
+    logger_->log(logger::LogLevel::INFO, "Creating and connecting clients...");
     auto [session1, session2, session3] = createAndConnectClients(client_target_ports);
     
-    logger_->log("Preparing test messages...");
+    logger_->log(logger::LogLevel::INFO, "Preparing test messages...");
     // Test messages
     std::string message1 = "message from client 1";
     std::string message2 = "message from client 2";
     std::string message3 = "message from client 3";
     
-    logger_->log("Sending messages...");
+    logger_->log(logger::LogLevel::INFO, "Sending messages...");
     // Send messages
     auto write1 = session1->write(ConstBuffer(message1.data(), message1.size()), std::chrono::milliseconds(1000));
     auto write2 = session2->write(ConstBuffer(message2.data(), message2.size()), std::chrono::milliseconds(1000));
     auto write3 = session3->write(ConstBuffer(message3.data(), message3.size()), std::chrono::milliseconds(1000));
     
-    logger_->log("Write results: %d, %d, %d", (int)write1.code, (int)write2.code, (int)write3.code);
+    logger_->log(logger::LogLevel::INFO, "Write results: %d, %d, %d", (int)write1.code, (int)write2.code, (int)write3.code);
     
     ASSERT_EQ(IOResultCode::Success, write1.code);
     ASSERT_EQ(IOResultCode::Success, write2.code);
@@ -210,27 +210,27 @@ void MultiClientNotificationTest::runNotificationTest(bool useProxies) {
     std::string response3(buffer.view().data, read3.count);
     ASSERT_EQ("echo " + message3, response3);
     
-    logger_->log("Multi-proxy echo test completed successfully (useProxies=%s)", useProxies ? "true" : "false");
-    logger_->log("Client 1: sent '%s', received '%s'", message1.c_str(), response1.c_str());
-    logger_->log("Client 2: sent '%s', received '%s'", message2.c_str(), response2.c_str());
-    logger_->log("Client 3: sent '%s', received '%s'", message3.c_str(), response3.c_str());
+    logger_->log(logger::LogLevel::INFO, "Multi-proxy echo test completed successfully (useProxies=%s)", useProxies ? "true" : "false");
+    logger_->log(logger::LogLevel::INFO, "Client 1: sent '%s', received '%s'", message1.c_str(), response1.c_str());
+    logger_->log(logger::LogLevel::INFO, "Client 2: sent '%s', received '%s'", message2.c_str(), response2.c_str());
+    logger_->log(logger::LogLevel::INFO, "Client 3: sent '%s', received '%s'", message3.c_str(), response3.c_str());
 }
 
 void MultiClientNotificationTest::runCrossClientNotificationTest(bool useProxies) {
-    logger_->log("Starting cross-client notification test (useProxies=%s)", useProxies ? "true" : "false");
+    logger_->log(logger::LogLevel::INFO, "Starting cross-client notification test (useProxies=%s)", useProxies ? "true" : "false");
     
     std::vector<uint16_t> client_target_ports = useProxies 
         ? setupProxyChain(true)  // Use notification handler
         : setupDirectConnection(true);
     
-    logger_->log("Waiting for server chain to stabilize (required for multi-proxy coordination)...");
-    logger_->log("SLEEPING for 300ms for proxy chain stabilization");
+    logger_->log(logger::LogLevel::INFO, "Waiting for server chain to stabilize (required for multi-proxy coordination)...");
+    logger_->log(logger::LogLevel::INFO, "SLEEPING for 300ms for proxy chain stabilization");
     std::this_thread::sleep_for(std::chrono::milliseconds(300)); // Reduced from 500ms
     
     auto [session1, session2, session3] = createAndConnectClients(client_target_ports);
     
-    logger_->log("Allowing NotificationHandler to register all clients (ensures complete notifications)...");
-    logger_->log("SLEEPING for 100ms for client registration");
+    logger_->log(logger::LogLevel::INFO, "Allowing NotificationHandler to register all clients (ensures complete notifications)...");
+    logger_->log(logger::LogLevel::INFO, "SLEEPING for 100ms for client registration");
     std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Reduced from 200ms
     
     // Send two rounds of messages
@@ -242,7 +242,7 @@ void MultiClientNotificationTest::runCrossClientNotificationTest(bool useProxies
     // Verify cross-client notifications for round 2 messages
     verifyNotifications(client1_combined, client2_combined, client3_combined);
     
-    logger_->log("Cross-client notification test completed successfully (useProxies=%s)", useProxies ? "true" : "false");
+    logger_->log(logger::LogLevel::INFO, "Cross-client notification test completed successfully (useProxies=%s)", useProxies ? "true" : "false");
 }
 
 void MultiClientNotificationTest::sendMessageRounds(
@@ -255,18 +255,18 @@ void MultiClientNotificationTest::sendMessageRounds(
     std::string message2 = "message from client 2";
     std::string message3 = "message from client 3";
     
-    logger_->log("Sending first round of messages...");
+    logger_->log(logger::LogLevel::INFO, "Sending first round of messages...");
     session1->write(ConstBuffer(message1.data(), message1.size()), std::chrono::milliseconds(1000));
-    logger_->log("Brief pause to ensure sequential proxy chain processing...");
-    logger_->log("SLEEPING for 100ms for sequential processing");
+    logger_->log(logger::LogLevel::INFO, "Brief pause to ensure sequential proxy chain processing...");
+    logger_->log(logger::LogLevel::INFO, "SLEEPING for 100ms for sequential processing");
     std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Reduced from 200ms
     session2->write(ConstBuffer(message2.data(), message2.size()), std::chrono::milliseconds(1000));
-    logger_->log("SLEEPING for 100ms for sequential processing");
+    logger_->log(logger::LogLevel::INFO, "SLEEPING for 100ms for sequential processing");
     std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Reduced from 200ms
     session3->write(ConstBuffer(message3.data(), message3.size()), std::chrono::milliseconds(1000));
     
-    logger_->log("Ensuring all proxy connections are established before second round...");
-    logger_->log("SLEEPING for 500ms for connection establishment");
+    logger_->log(logger::LogLevel::INFO, "Ensuring all proxy connections are established before second round...");
+    logger_->log(logger::LogLevel::INFO, "SLEEPING for 500ms for connection establishment");
     std::this_thread::sleep_for(std::chrono::milliseconds(500)); // Reduced from 1000ms
     
     // Second round messages
@@ -274,17 +274,17 @@ void MultiClientNotificationTest::sendMessageRounds(
     std::string message2_round2 = "second message from client 2";
     std::string message3_round2 = "second message from client 3";
     
-    logger_->log("Sending second round of messages...");
+    logger_->log(logger::LogLevel::INFO, "Sending second round of messages...");
     session1->write(ConstBuffer(message1_round2.data(), message1_round2.size()), std::chrono::milliseconds(1000));
-    logger_->log("SLEEPING for 100ms for sequential processing");
+    logger_->log(logger::LogLevel::INFO, "SLEEPING for 100ms for sequential processing");
     std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Reduced from 200ms
     session2->write(ConstBuffer(message2_round2.data(), message2_round2.size()), std::chrono::milliseconds(1000));
-    logger_->log("SLEEPING for 100ms for sequential processing");
+    logger_->log(logger::LogLevel::INFO, "SLEEPING for 100ms for sequential processing");
     std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Reduced from 200ms
     session3->write(ConstBuffer(message3_round2.data(), message3_round2.size()), std::chrono::milliseconds(1000));
     
-    logger_->log("Allowing time for all notifications to propagate through proxy chain...");
-    logger_->log("SLEEPING for 500ms for notification propagation");
+    logger_->log(logger::LogLevel::INFO, "Allowing time for all notifications to propagate through proxy chain...");
+    logger_->log(logger::LogLevel::INFO, "SLEEPING for 500ms for notification propagation");
     std::this_thread::sleep_for(std::chrono::milliseconds(500)); // Reduced from 1000ms
 }
 
@@ -343,19 +343,19 @@ void MultiClientNotificationTest::logReceivedMessages(
     const std::vector<std::string>& client2_messages,
     const std::vector<std::string>& client3_messages) {
     
-    logger_->log("Client 1 received %zu messages", client1_messages.size());
+    logger_->log(logger::LogLevel::INFO, "Client 1 received %zu messages", client1_messages.size());
     for (const auto& msg : client1_messages) {
-        logger_->log("  Client 1: '%s'", msg.c_str());
+        logger_->log(logger::LogLevel::INFO, "  Client 1: '%s'", msg.c_str());
     }
     
-    logger_->log("Client 2 received %zu messages", client2_messages.size());
+    logger_->log(logger::LogLevel::INFO, "Client 2 received %zu messages", client2_messages.size());
     for (const auto& msg : client2_messages) {
-        logger_->log("  Client 2: '%s'", msg.c_str());
+        logger_->log(logger::LogLevel::INFO, "  Client 2: '%s'", msg.c_str());
     }
     
-    logger_->log("Client 3 received %zu messages", client3_messages.size());
+    logger_->log(logger::LogLevel::INFO, "Client 3 received %zu messages", client3_messages.size());
     for (const auto& msg : client3_messages) {
-        logger_->log("  Client 3: '%s'", msg.c_str());
+        logger_->log(logger::LogLevel::INFO, "  Client 3: '%s'", msg.c_str());
     }
 }
 

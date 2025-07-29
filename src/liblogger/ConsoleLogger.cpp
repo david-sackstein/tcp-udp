@@ -4,7 +4,13 @@
 
 namespace logger {
 
-void ConsoleLogger::log(const char* format, ...) {
+ConsoleLogger::ConsoleLogger(LogLevel level) : level_(level) {}
+
+void ConsoleLogger::log(LogLevel level, const char* format, ...) {
+    if (level < level_) {
+        return;
+    }
+
     std::lock_guard lock (mutex_);
 
     va_list args;

@@ -7,12 +7,12 @@
 static std::chrono::milliseconds block = std::chrono::milliseconds::max();
 
 int main() {
-    auto logger = logger::create_console_logger();
-    logger->log("TCP Echo Client");
+    auto logger = logger::create_console_logger(logger::LogLevel::ERROR);
+    logger->log(logger::LogLevel::INFO, "TCP Echo Client");
 
     auto client = tcp::create_tcp_client(*logger);
     if (!client) {
-        logger->log("Failed to create client");
+        logger->log(logger::LogLevel::ERROR, "Failed to create client");
         return 1;
     }
 
@@ -20,17 +20,17 @@ int main() {
 
     auto session = client->connect(Endpoint::any_loop_back(), endpoint);
     if (!session) {
-        logger->log("Failed to connect to server");
+        logger->log(logger::LogLevel::ERROR, "Failed to connect to server");
         return 1;
     }
 
     const std::string message = "hello";
 
-    logger->log("=== Echo Test ===");
+    logger->log(logger::LogLevel::INFO, "=== Echo Test ===");
 
     if (IOResult result = session->write(ConstBuffer(message.data(), message.size()), block);
         result.code != IOResultCode::Success || result.count != message.size()) {
-        logger->log("Failed to send message: %s", result.error_message.c_str());
+        logger->log(logger::LogLevel::ERROR, "Failed to send message: %s", result.error_message.c_str());
         return 1;
     }
 
@@ -38,20 +38,20 @@ int main() {
 
     const auto result = session->read(buffer_in.view(), block);
     if (result.code != IOResultCode::Success) {
-        logger->log("Failed to receive response: %s", result.error_message.c_str());
+        logger->log(logger::LogLevel::ERROR, "Failed to receive response: %s", result.error_message.c_str());
         return 1;
     }
     std::string response(buffer_in.view().data, result.count);
 
     std::string expected_response = "echo" + message;
     if (response == expected_response) {
-        logger->log("✓ Echo test successful! Server correctly echoed: %s", response.c_str());
+        logger->log(logger::LogLevel::INFO, "✓ Echo test successful! Server correctly echoed: %s", response.c_str());
     } else {
-        logger->log("✗ Echo test failed! Expected: %s, Got: %s", expected_response.c_str(), response.c_str());
+        logger->log(logger::LogLevel::ERROR, "✗ Echo test failed! Expected: %s, Got: %s", expected_response.c_str(), response.c_str());
     }
 
     client->disconnect();
 
-    logger->log("Client finished successfully");
+    logger->log(logger::LogLevel::INFO, "Client finished successfully");
     return 0;
 }

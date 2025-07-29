@@ -25,7 +25,7 @@ std::unique_ptr<ITask> TcpServerProxyClientHandler::handle_client(std::unique_pt
     Endpoint tcp_client = shared_session->get_peer();
     std::string client_key = tcp_client.to_string();
 
-    logger_.log("TcpServerProxyClientHandler: New TCP client connected: %s", tcp_client.to_string().c_str());
+    logger_.log(logger::LogLevel::INFO, "TcpServerProxyClientHandler: New TCP client connected: %s", tcp_client.to_string().c_str());
 
     udp_handler_->register_tcp_session(client_key, shared_session);
 
@@ -33,11 +33,11 @@ std::unique_ptr<ITask> TcpServerProxyClientHandler::handle_client(std::unique_pt
         try {
             handleTcpToUdpForwarding(*shared_session, client_key, cancelled);
         } catch (std::runtime_error& e) {
-            logger_.log("TcpServerProxyClientHandler: Exception for client %s: %s", client_key.c_str(), e.what());
+            logger_.log(logger::LogLevel::ERROR, "TcpServerProxyClientHandler: Exception for client %s: %s", client_key.c_str(), e.what());
         }
         
         udp_handler_->unregister_tcp_session(client_key);
-        logger_.log("TcpServerProxyClientHandler: Cleaned up client %s", client_key.c_str());
+        logger_.log(logger::LogLevel::INFO, "TcpServerProxyClientHandler: Cleaned up client %s", client_key.c_str());
     });
 }
 
@@ -50,7 +50,7 @@ void TcpServerProxyClientHandler::handleTcpToUdpForwarding(
         IOResult result = tcp_session.read(tcp_buffer_.view(), timeout_ms);
         
         if (result.code == IOResultCode::Error || result.code == IOResultCode::ConnectionClosed) {
-            logger_.log("TcpServerProxyClientHandler: Client %s disconnected", client_key.c_str());
+            logger_.log(logger::LogLevel::INFO, "TcpServerProxyClientHandler: Client %s disconnected", client_key.c_str());
             break;
         }
         
@@ -68,8 +68,8 @@ void TcpServerProxyClientHandler::forwardToUdpProxy(const IOResult& tcp_data, co
     ConstBuffer data_to_forward{tcp_buffer_.view().data, tcp_data.count};
     
     if (!udp_client_.send_to(udp_proxy_, data_to_forward)) {
-        logger_.log("TcpServerProxyClientHandler: Failed to send to UDP proxy for %s", client_key.c_str());
+        logger_.log(logger::LogLevel::ERROR, "TcpServerProxyClientHandler: Failed to send to UDP proxy for %s", client_key.c_str());
     } else {
-        logger_.log("TcpServerProxyClientHandler: Forwarded TCP data from %s to UDP proxy", client_key.c_str());
+        logger_.log(logger::LogLevel::INFO, "TcpServerProxyClientHandler: Forwarded TCP data from %s to UDP proxy", client_key.c_str());
     }
 }

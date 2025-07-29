@@ -19,12 +19,12 @@ std::unique_ptr<ITask> TcpEchoHandler::handle_client(std::unique_ptr<tcp::ITcpSe
             auto read_result = shared_session->read(buffer_in.view(), std::chrono::milliseconds(100));
             
             if (read_result.code == IOResultCode::Error) {
-                logger_.log("TcpEchoHandler: failed to read: %s", read_result.error_message.c_str());
+                logger_.log(logger::LogLevel::ERROR, "TcpEchoHandler: failed to read: %s", read_result.error_message.c_str());
                 break;
             }
 
             if (read_result.code == IOResultCode::ConnectionClosed) {
-                logger_.log("TcpEchoHandler: read ConnectionClosed");
+                logger_.log(logger::LogLevel::INFO, "TcpEchoHandler: read ConnectionClosed");
                 break;
             }
 
@@ -42,12 +42,12 @@ std::unique_ptr<ITask> TcpEchoHandler::handle_client(std::unique_ptr<tcp::ITcpSe
             auto write_result = shared_session->write(buffer_out, std::chrono::milliseconds(100));
             
             if (write_result.code == IOResultCode::Error) {
-                logger_.log("TcpEchoHandler: failed to write: %s", write_result.error_message.c_str());
+                logger_.log(logger::LogLevel::ERROR, "TcpEchoHandler: failed to write: %s", write_result.error_message.c_str());
                 break;
             }
 
             if (write_result.code == IOResultCode::ConnectionClosed) {
-                logger_.log("TcpEchoHandler: write ConnectionClosed");
+                logger_.log(logger::LogLevel::INFO, "TcpEchoHandler: write ConnectionClosed");
                 break;
             }
 

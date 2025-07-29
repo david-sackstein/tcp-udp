@@ -17,7 +17,7 @@ int TcpServerProxyUdpHandler::handle_udp_input(udp::IUdpClient& udp_client) {
         ssize_t received = udp_client.receive_from(buffer_.view(), udp_sender);
 
         if (received == -1) {
-            logger_.log("TcpServerProxyUdpHandler: Failed to receive UDP data");
+            logger_.log(logger::LogLevel::ERROR, "TcpServerProxyUdpHandler: Failed to receive UDP data");
             return -1;
         }
 
@@ -26,7 +26,7 @@ int TcpServerProxyUdpHandler::handle_udp_input(udp::IUdpClient& udp_client) {
         }
 
         ConstBuffer udp_data{buffer_.view().data, static_cast<size_t>(received)};
-        logger_.log("TcpServerProxyUdpHandler: Received UDP response from %s: '%s'", 
+        logger_.log(logger::LogLevel::INFO, "TcpServerProxyUdpHandler: Received UDP response from %s: '%s'", 
                    udp_sender.to_string().c_str(),
                    std::string(udp_data.data, udp_data.size).c_str());
 
@@ -35,9 +35,9 @@ int TcpServerProxyUdpHandler::handle_udp_input(udp::IUdpClient& udp_client) {
             if (tcp_session) {
                 auto write_result = tcp_session->write(udp_data, write_timeout);
                 if (write_result.code == IOResultCode::Success) {
-                    logger_.log("TcpServerProxyUdpHandler: Forwarded UDP response to TCP client %s", client_key.c_str());
+                    logger_.log(logger::LogLevel::INFO, "TcpServerProxyUdpHandler: Forwarded UDP response to TCP client %s", client_key.c_str());
                 } else {
-                    logger_.log("TcpServerProxyUdpHandler: Failed to forward to TCP client %s: %s", 
+                    logger_.log(logger::LogLevel::ERROR, "TcpServerProxyUdpHandler: Failed to forward to TCP client %s: %s", 
                                client_key.c_str(), write_result.error_message.c_str());
                 }
             }
@@ -45,17 +45,17 @@ int TcpServerProxyUdpHandler::handle_udp_input(udp::IUdpClient& udp_client) {
 
         return 0;
     } catch (std::runtime_error& e) {
-        logger_.log("TcpServerProxyUdpHandler: Exception: %s", e.what());
+        logger_.log(logger::LogLevel::ERROR, "TcpServerProxyUdpHandler: Exception: %s", e.what());
         return -1;
     }
 }
 
 void TcpServerProxyUdpHandler::register_tcp_session(const std::string& client_key, std::shared_ptr<tcp::ITcpSession> tcp_session) {
     tcp_sessions_[client_key] = tcp_session;
-    logger_.log("TcpServerProxyUdpHandler: Registered TCP session for client %s", client_key.c_str());
+    logger_.log(logger::LogLevel::INFO, "TcpServerProxyUdpHandler: Registered TCP session for client %s", client_key.c_str());
 }
 
 void TcpServerProxyUdpHandler::unregister_tcp_session(const std::string& client_key) {
     tcp_sessions_.erase(client_key);
-    logger_.log("TcpServerProxyUdpHandler: Unregistered TCP session for client %s", client_key.c_str());
+    logger_.log(logger::LogLevel::INFO, "TcpServerProxyUdpHandler: Unregistered TCP session for client %s", client_key.c_str());
 } 

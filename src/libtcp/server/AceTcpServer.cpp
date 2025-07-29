@@ -21,7 +21,7 @@ AceTcpServer::AceTcpServer(logger::ILogger& logger, const Endpoint& local_endpoi
     }
     local_endpoint_ = acceptor_.get_local_endpoint();
 
-    logger_.log("TcpServer: %s successfully bound", local_endpoint_.to_string().c_str());
+    logger_.log(logger::LogLevel::INFO, "TcpServer: %s successfully bound", local_endpoint_.to_string().c_str());
 }
 
 AceTcpServer::AceTcpServer(logger::ILogger& logger, const Endpoint& local_endpoint, tcp::ITcpClientHandler &handler, std::shared_ptr<ACE_Reactor> external_reactor)
@@ -40,7 +40,7 @@ AceTcpServer::AceTcpServer(logger::ILogger& logger, const Endpoint& local_endpoi
     }
     local_endpoint_ = acceptor_.get_local_endpoint();
 
-    logger_.log("TcpServer: %s successfully bound with external reactor", local_endpoint_.to_string().c_str());
+    logger_.log(logger::LogLevel::INFO, "TcpServer: %s successfully bound with external reactor", local_endpoint_.to_string().c_str());
 }
 
 ACE_Reactor& AceTcpServer::get_reactor() {
@@ -59,5 +59,5 @@ void AceTcpServer::start() {
 void AceTcpServer::stop() {
     acceptor_.close();
     get_reactor().end_reactor_event_loop();
-    logger_.log("TcpServer: %s stopped", local_endpoint_.to_string().c_str());
+    logger_.log(logger::LogLevel::INFO, "TcpServer: %s stopped", local_endpoint_.to_string().c_str());
 }

@@ -8,12 +8,13 @@ namespace logger {
 
 class FileLogger final : public ILogger {
 public:
-    explicit FileLogger(const std::string& filename);
-    void log(const char* format, ...) override;
+    explicit FileLogger(LogLevel level, const std::string& filename);
+    void log(LogLevel level, const char* format, ...) override;
 
 private:
     std::mutex mutex_;
     std::ofstream out;
+    LogLevel level_;
 };
 
 } 

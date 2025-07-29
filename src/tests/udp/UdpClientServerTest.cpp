@@ -37,7 +37,7 @@ void UdpClientServerTest::runTest() const {
 }
 
 void UdpClientServerTest::SetUp() {
-    logger_ = logger::create_console_logger();
+    logger_ = logger::create_console_logger(logger::LogLevel::ERROR);
     client_handler_ = udp::create_udp_echo_handler(*logger_);
     server_ = udp::start_udp_server(*logger_, Endpoint::any_loop_back(), *client_handler_);
 }

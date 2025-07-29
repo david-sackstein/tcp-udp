@@ -32,7 +32,7 @@ std::shared_ptr<tcp::ITcpSession> AceTcpClient::connect(const Endpoint &local, c
 
     endpoint_pair_ = {get_bound_endpoint(socket), remote};
 
-    logger_.log("TcpClient: %s -> %s connected",
+    logger_.log(logger::LogLevel::INFO, "TcpClient: %s -> %s connected",
            endpoint_pair_.local.to_string().c_str(),
            endpoint_pair_.remote.to_string().c_str());
 
@@ -48,7 +48,7 @@ void AceTcpClient::disconnect() {
         session_->close();
         session_.reset();
 
-        logger_.log("TcpClient: %s -> %s disconnected",
+        logger_.log(logger::LogLevel::INFO, "TcpClient: %s -> %s disconnected",
                endpoint_pair_.local.to_string().c_str(),
                endpoint_pair_.remote.to_string().c_str());
     }

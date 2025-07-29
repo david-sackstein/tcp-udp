@@ -4,7 +4,7 @@
 #include <iostream>
 
 int main(int argc, char* argv[]) {
-    auto logger = logger::create_console_logger();
+    auto logger = logger::create_console_logger(logger::LogLevel::ERROR);
     
     const auto& local_addresses = tcp::get_local_ipv4_addresses();
     
@@ -14,12 +14,12 @@ int main(int argc, char* argv[]) {
     std::unique_ptr<tcp::ITcpClientHandler> echo_handler = tcp::create_tcp_echo_handler(*logger);
     auto server = tcp::create_tcp_server(*logger, listen_ep, *echo_handler);
 
-    logger->log("Server running on %s", server->get_local_endpoint().to_string().c_str());
-    logger->log("Press Ctrl+C to stop the server...");
+    logger->log(logger::LogLevel::INFO, "Server running on %s", server->get_local_endpoint().to_string().c_str());
+    logger->log(logger::LogLevel::INFO, "Press Ctrl+C to stop the server...");
 
     server->start();
     server->stop();
     
-    logger->log("tcp_echo_server shut down");
+    logger->log(logger::LogLevel::INFO, "tcp_echo_server shut down");
     return 0;
 }

@@ -27,13 +27,13 @@ AceUdpServer::AceUdpServer(
 
     session_ = std::make_unique<AceUdpClientSession>(logger_, local_endpoint_, socket_);
 
-    logger_.log("UdpServer: %s successfully bound", local_endpoint_.to_string().c_str());
+    logger_.log(logger::LogLevel::INFO, "UdpServer: %s successfully bound", local_endpoint_.to_string().c_str());
 }
 
 AceUdpServer::~AceUdpServer() {
     stop();
     socket_.close();
-    logger_.log("UdpServer: %s socket closed", local_endpoint_.to_string().c_str());
+    logger_.log(logger::LogLevel::INFO, "UdpServer: %s socket closed", local_endpoint_.to_string().c_str());
 }
 
 const Endpoint &AceUdpServer::get_local_endpoint() const {
@@ -56,7 +56,7 @@ void AceUdpServer::stop() {
 }
 
 int AceUdpServer::handle_input(ACE_HANDLE) {
-    logger_.log("UdpServer: received message from %s", local_endpoint_.to_string().c_str());
+    logger_.log(logger::LogLevel::INFO, "UdpServer: received message from %s", local_endpoint_.to_string().c_str());
 
     auto task = handler_.handle_client(*session_);
     if (task) {
