@@ -3,15 +3,14 @@
 
 namespace logger {
 
-FileLogger::FileLogger(LogLevel level, const std::string& filename)
-    : out(filename, std::ios::app), level_(level) {}
+FileLogger::FileLogger(LogLevel level, const std::string& filename) : out(filename, std::ios::app), level_(level) {}
 
 void FileLogger::log(LogLevel level, const char* format, ...) {
     if (level < level_) {
         return;
     }
 
-    std::lock_guard lock (mutex_);
+    std::lock_guard lock(mutex_);
 
     va_list args;
     va_start(args, format);
@@ -21,4 +20,4 @@ void FileLogger::log(LogLevel level, const char* format, ...) {
     out << msg << std::endl;
 }
 
-} 
+} // namespace logger

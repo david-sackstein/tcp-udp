@@ -11,7 +11,7 @@ void ConsoleLogger::log(LogLevel level, const char* format, ...) {
         return;
     }
 
-    std::lock_guard lock (mutex_);
+    std::lock_guard lock(mutex_);
 
     va_list args;
     va_start(args, format);
@@ -21,4 +21,4 @@ void ConsoleLogger::log(LogLevel level, const char* format, ...) {
     std::cout << msg << std::endl;
 }
 
-} 
+} // namespace logger

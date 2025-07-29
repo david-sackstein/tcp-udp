@@ -14,7 +14,7 @@ void UdpClientServerTest::runTest() const {
     auto client = udp::create_udp_client(*logger_, Endpoint::any_loop_back()); // Bind to ephemeral port
     ASSERT_NE(client, nullptr);
 
-    const char *msg = "hello udp server";
+    const char* msg = "hello udp server";
     const size_t msg_len = strlen(msg);
 
     const bool sent = client->send_to(server_endpoint, ConstBuffer(msg, msg_len));

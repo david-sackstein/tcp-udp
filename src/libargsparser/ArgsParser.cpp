@@ -1,16 +1,17 @@
 #include "ArgsParser.h"
 #include "CommandLineParser.h"
-#include "InteractiveConfigurator.h"
 #include "EndpointValidator.h"
+#include "InteractiveConfigurator.h"
 #include "UserInputHandler.h"
 
 #include <common/Endpoint.h>
 
-#include <iostream>
 #include <algorithm>
+#include <iostream>
 
-std::pair<std::string, std::string> ArgsParser::get_endpoint_configuration(int argc, char* argv[], const std::vector<std::string>& local_addresses) {
-
+std::pair<std::string, std::string> ArgsParser::get_endpoint_configuration(int argc,
+    char* argv[],
+    const std::vector<std::string>& local_addresses) {
     // If exactly 2 arguments provided, use command line arguments
     if (argc == 3) {
         return CommandLineParser::handle_command_line_args(argv, local_addresses);
@@ -35,4 +36,4 @@ std::string ArgsParser::get_listen_endpoint(int argc, char* argv[], const std::v
     std::string local_host = InteractiveConfigurator::select_host(local_addresses);
     int local_port = UserInputHandler::select_port();
     return InteractiveConfigurator::build_endpoint_string(local_host, local_port);
-} 
+}

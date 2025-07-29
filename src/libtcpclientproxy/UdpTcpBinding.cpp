@@ -12,18 +12,18 @@ ACE_HANDLE UdpTcpBinding::get_handle() const {
 
 int UdpTcpBinding::handle_input(ACE_HANDLE) {
     auto result = tcp_session_->read(buffer_.view(), std::chrono::milliseconds(0));
-    
+
     if (result.code == IOResultCode::Success && result.count > 0) {
         ConstBuffer tcp_data{buffer_.view().data, result.count};
         udp_session_.write_to(tcp_data, udp_sender_, common::STANDARD_TIMEOUT);
         return 0;
     }
-    
+
     if (result.code == IOResultCode::ConnectionClosed || result.code == IOResultCode::Error) {
         unregister_from_reactor();
         return -1;
     }
-    
+
     return 0;
 }
 
@@ -42,4 +42,4 @@ void UdpTcpBinding::unregister_from_reactor() {
         registered_ = false;
         reactor_ = nullptr;
     }
-} 
+}

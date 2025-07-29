@@ -5,7 +5,8 @@
 
 #include <iostream>
 
-std::pair<std::string, std::string> InteractiveConfigurator::handle_interactive_config(const std::vector<std::string>& local_addresses) {
+std::pair<std::string, std::string> InteractiveConfigurator::handle_interactive_config(
+    const std::vector<std::string>& local_addresses) {
     std::cout << "=== TCP Client Proxy Configuration ===" << std::endl;
     std::cout << "No command line arguments provided. Using interactive configuration." << std::endl;
 
@@ -23,7 +24,7 @@ std::pair<std::string, std::string> InteractiveConfigurator::handle_interactive_
     std::cout << "Forward endpoint: " << forward_endpoint << std::endl;
     std::cout << "Press Enter to continue...";
     std::cin.get();
-    
+
     return {listen_endpoint, forward_endpoint};
 }
 
@@ -34,7 +35,7 @@ std::string InteractiveConfigurator::select_host(const std::vector<std::string>&
 
     std::string prompt = "\nSelect local address (0-" + std::to_string(addresses.size() - 1) + "): ";
     int selection = UserInputHandler::get_validated_user_input(0, static_cast<int>(addresses.size() - 1), prompt);
-    
+
     return addresses[selection];
 }
 
@@ -52,4 +53,4 @@ void InteractiveConfigurator::display_address_options(const std::vector<std::str
 std::string InteractiveConfigurator::build_endpoint_string(const std::string& host, int port) {
     Endpoint endpoint(host, static_cast<uint16_t>(port));
     return endpoint.to_string();
-} 
+}

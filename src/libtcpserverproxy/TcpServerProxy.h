@@ -3,12 +3,12 @@
 #include "ServerProxyClientHandler.h"
 #include "ServerProxyUdpHandler.h"
 
+#include <ace/Event_Handler.h>
+#include <ace/Reactor.h>
+#include <libudp/client/IUdpClient.h>
+#include <memory>
 #include "common/server/IBackgroundServer.h"
 #include "common/server/IBlockingServer.h"
-#include <libudp/client/IUdpClient.h>
-#include <ace/Reactor.h>
-#include <ace/Event_Handler.h>
-#include <memory>
 
 class TcpServerProxy final : public IBlockingServer, public ACE_Event_Handler {
 public:
@@ -33,6 +33,6 @@ private:
     std::unique_ptr<ServerProxyClientHandler> tcp_handler_;
     std::unique_ptr<ServerProxyUdpHandler> udp_handler_;
     logger::ILogger& logger_;
-    
+
     bool reactor_registered_ = false;
-}; 
+};

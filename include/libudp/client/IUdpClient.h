@@ -9,14 +9,14 @@
 #include <memory>
 
 namespace udp {
-    class IUdpClient {
-    public:
-        virtual ~IUdpClient() = default;
+class IUdpClient {
+public:
+    virtual ~IUdpClient() = default;
 
-        [[nodiscard]] virtual const Endpoint& get_local_endpoint() const = 0;
+    [[nodiscard]] virtual const Endpoint& get_local_endpoint() const = 0;
 
-        virtual bool send_to(const Endpoint &remote, ConstBuffer buffer) = 0;
+    virtual bool send_to(const Endpoint& remote, ConstBuffer buffer) = 0;
 
-        virtual ssize_t receive_from(Buffer buffer, Endpoint &sender) = 0;
-    };
-}
+    virtual ssize_t receive_from(Buffer buffer, Endpoint& sender) = 0;
+};
+} // namespace udp

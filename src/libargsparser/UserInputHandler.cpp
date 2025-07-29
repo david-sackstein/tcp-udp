@@ -1,5 +1,5 @@
-#include "EndpointValidator.h"
 #include "UserInputHandler.h"
+#include "EndpointValidator.h"
 
 #include <common/Constants.h>
 
@@ -16,17 +16,17 @@ int UserInputHandler::get_validated_user_input(int min_value, int max_value, con
     while (true) {
         std::cout << prompt;
         std::cin >> input;
-        
+
         if (std::cin.fail()) {
             clear_cin_buffer();
             std::cout << "Invalid input. Please enter a number.\n";
             continue;
         }
-        
+
         if (input >= min_value && input <= max_value) {
             break;
         }
-        
+
         std::cout << "Invalid selection. Please choose between " << min_value << " and " << max_value << ".\n";
     }
     return input;
@@ -47,17 +47,17 @@ int UserInputHandler::select_port() {
     int port;
     while (true) {
         std::cin >> port;
-        
+
         if (std::cin.fail()) {
             clear_cin_buffer();
             std::cout << "Invalid input. Please enter a number.\n";
             continue;
         }
-        
+
         if (EndpointValidator::is_valid_port(port)) {
             break;
         }
-        
+
         std::cout << "Invalid port. Please enter a number between 0 and " << common::MAX_PORT << ".\n";
     }
     return port;
@@ -65,7 +65,7 @@ int UserInputHandler::select_port() {
 
 std::string UserInputHandler::select_remote_endpoint() {
     std::cout << "\n=== Remote TCP Server Configuration ===\n";
-    
+
     std::string prompt = "Enter remote TCP server address (host:port): ";
     std::string remote_endpoint = get_user_string_input(prompt);
 
@@ -73,6 +73,6 @@ std::string UserInputHandler::select_remote_endpoint() {
         std::cout << "Invalid format. Please use host:port format.\n";
         return select_remote_endpoint(); // Recursive call for retry
     }
-    
+
     return remote_endpoint;
-} 
+}

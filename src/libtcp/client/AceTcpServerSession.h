@@ -1,24 +1,25 @@
 #pragma once
 
-#include <libtcp/ITcpSession.h>
 #include <common/EndpointPair.h>
 #include <liblogger/ILogger.h>
+#include <libtcp/ITcpSession.h>
 
-#include <ace/SOCK_Stream.h>
 #include <ace/INET_Addr.h>
+#include <ace/SOCK_Stream.h>
 
 class AceTcpServerSession final : public tcp::ITcpSession {
 public:
-    AceTcpServerSession(
-        logger::ILogger& logger,
+    AceTcpServerSession(logger::ILogger& logger,
         EndpointPair endpoint_pair,
-        const ACE_SOCK_Stream &stream,
-        const ACE_INET_Addr &addr);
+        const ACE_SOCK_Stream& stream,
+        const ACE_INET_Addr& addr);
 
     ~AceTcpServerSession() override;
 
     [[nodiscard]] Endpoint get_peer() const override;
-    [[nodiscard]] int get_socket() const override { return socket_.get_handle(); }
+    [[nodiscard]] int get_socket() const override {
+        return socket_.get_handle();
+    }
 
     IOResult read(Buffer buffer, std::chrono::milliseconds timeout) override;
 

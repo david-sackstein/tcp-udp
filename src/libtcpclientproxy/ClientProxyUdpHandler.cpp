@@ -4,13 +4,14 @@
 #include <common/StringUtils.h>
 #include <libacetools/IOResult.h>
 
-ClientProxyUdpHandler::ClientProxyUdpHandler(
-    logger::ILogger& logger, Endpoint local_endpoint, Endpoint tcp_server, std::shared_ptr<ACE_Reactor> reactor)
+ClientProxyUdpHandler::ClientProxyUdpHandler(logger::ILogger& logger,
+    Endpoint local_endpoint,
+    Endpoint tcp_server,
+    std::shared_ptr<ACE_Reactor> reactor)
     : logger_(logger),
       local_endpoint_(std::move(local_endpoint)),
       udp_session_handler_(std::make_unique<UdpSessionHandler>(logger)),
       binding_manager_(std::make_unique<BindingManager>(logger)) {
-    
     auto factory = std::make_unique<BindingFactory>(logger, std::move(tcp_server), std::move(reactor));
     binding_manager_->setBindingFactory(std::move(factory));
 }
@@ -31,26 +32,24 @@ std::unique_ptr<ITask> ClientProxyUdpHandler::handle_client(udp::IUdpSession& cl
     }
 }
 
-void ClientProxyUdpHandler::sendToTcpServer(const UdpTcpBinding& binding, ConstBuffer data, const Endpoint& udp_sender) const {
+void ClientProxyUdpHandler::sendToTcpServer(const UdpTcpBinding& binding,
+    ConstBuffer data,
+    const Endpoint& udp_sender) const {
     auto& tcp_session = binding.get_tcp_session();
     auto tcp_send_result = tcp_session.write(data, common::STANDARD_TIMEOUT);
-    
+
     if (tcp_send_result.code == IOResultCode::Error) {
-        throw std::runtime_error(format_string(
-            "ClientProxyUdpHandler: %s failed to send to TCP server: %s",
-            udp_sender.to_string().c_str(),
-            tcp_send_result.error_message.c_str()));
+        throw std::runtime_error(format_string("ClientProxyUdpHandler: %s failed to send to TCP server: %s",
+            udp_sender.to_string().c_str(), tcp_send_result.error_message.c_str()));
     }
-    
+
     if (tcp_send_result.code == IOResultCode::ConnectionClosed) {
-        logger_.log(logger::LogLevel::INFO, "ClientProxyUdpHandler: %s write TCP ConnectionClosed", udp_sender.to_string().c_str());
+        logger_.log(logger::LogLevel::INFO, "ClientProxyUdpHandler: %s write TCP ConnectionClosed",
+            udp_sender.to_string().c_str());
         return;
     }
-    
+
     if (tcp_send_result.code == IOResultCode::Timeout) {
         return;
     }
 }
-
-
-

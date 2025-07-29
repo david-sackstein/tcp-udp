@@ -10,7 +10,8 @@ public:
     ~SignalRegistration() override;
 
     int handle_signal(int signum, siginfo_t*, ucontext_t*) override;
+
 private:
     // non-owning pointer
     ACE_Reactor* reactor_;
-}; 
+};

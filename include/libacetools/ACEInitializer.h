@@ -1,8 +1,8 @@
 #pragma once
 
 #include <common/Exported.h>
-#include <vector>
 #include <string>
+#include <vector>
 
 class ACEInitializer {
     ACEInitializer();
@@ -11,6 +11,5 @@ class ACEInitializer {
     std::vector<std::string> local_addresses_;
 
 public:
-
     EXPORTED static const std::vector<std::string>& init();
 };

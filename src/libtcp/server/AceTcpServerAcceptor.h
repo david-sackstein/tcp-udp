@@ -1,14 +1,14 @@
 #pragma once
 
-#include <libtcp/server/ITcpClientHandler.h>
-#include <liblogger/ILogger.h>
 #include <common/task/ITask.h>
+#include <liblogger/ILogger.h>
+#include <libtcp/server/ITcpClientHandler.h>
 
 #include <ace/Event_Handler.h>
 #include <ace/SOCK_Acceptor.h>
 
-#include <vector>
 #include <atomic>
+#include <vector>
 
 class AceTcpServerAcceptor final : public ACE_Event_Handler {
 public:
@@ -19,12 +19,15 @@ public:
 
     int handle_input(ACE_HANDLE) override;
 
-    [[nodiscard]] ACE_HANDLE get_handle() const override { return acceptor_.get_handle(); }
+    [[nodiscard]] ACE_HANDLE get_handle() const override {
+        return acceptor_.get_handle();
+    }
 
-    [[nodiscard]] const Endpoint& get_local_endpoint() const { return local_endpoint_; }
+    [[nodiscard]] const Endpoint& get_local_endpoint() const {
+        return local_endpoint_;
+    }
 
 private:
-
     void stop_all_tasks();
 
     ACE_Reactor& reactor_;

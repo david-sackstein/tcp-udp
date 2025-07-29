@@ -3,7 +3,7 @@
 #include <cstddef>
 #include <vector>
 
-template<typename T>
+template <typename T>
 struct BufferT {
     T* data;
     size_t size;

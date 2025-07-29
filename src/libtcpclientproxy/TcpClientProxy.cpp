@@ -1,9 +1,9 @@
-#include "ClientProxyUdpHandler.h"
 #include "TcpClientProxy.h"
+#include "ClientProxyUdpHandler.h"
 
 #include <libudp/InternalExports.h>
 
-TcpClientProxy::TcpClientProxy(logger::ILogger &logger, const Endpoint &local_endpoint, Endpoint tcp_server)
+TcpClientProxy::TcpClientProxy(logger::ILogger& logger, const Endpoint& local_endpoint, Endpoint tcp_server)
     : local_endpoint_(local_endpoint),
       tcp_server_(std::move(tcp_server)),
       reactor_(std::make_shared<ACE_Reactor>()),
@@ -16,7 +16,7 @@ TcpClientProxy::~TcpClientProxy() {
     stop();
 }
 
-const Endpoint &TcpClientProxy::get_local_endpoint() const {
+const Endpoint& TcpClientProxy::get_local_endpoint() const {
     return local_endpoint_;
 }
 

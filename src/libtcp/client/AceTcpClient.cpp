@@ -1,28 +1,25 @@
 #include "AceTcpClient.h"
 
-#include <libacetools/Exports.h>
 #include <ace/Log_Msg.h>
+#include <libacetools/Exports.h>
 
 #include <iostream>
 
-AceTcpClient::AceTcpClient(logger::ILogger& logger)
-    : logger_(logger) {}
+AceTcpClient::AceTcpClient(logger::ILogger& logger) : logger_(logger) {}
 
 AceTcpClient::~AceTcpClient() noexcept {
     disconnect();
 }
 
-std::shared_ptr<tcp::ITcpSession> AceTcpClient::connect(const Endpoint &local, const Endpoint &remote) {
-
+std::shared_ptr<tcp::ITcpSession> AceTcpClient::connect(const Endpoint& local, const Endpoint& remote) {
     ACE_INET_Addr local_addr = to_ace_addr(local);
     ACE_INET_Addr remote_addr = to_ace_addr(remote);
 
     ACE_SOCK_Stream socket;
 
     if (connector_.connect(socket, remote_addr, nullptr, local_addr) == -1) {
-        ACE_ERROR((LM_ERROR, ACE_TEXT("connect failed: %s:%d -> %s:%d (errno=%d)\n"),
-            local_addr.get_host_addr(), local_addr.get_port_number(),
-            remote_addr.get_host_addr(), remote_addr.get_port_number(),
+        ACE_ERROR((LM_ERROR, ACE_TEXT("connect failed: %s:%d -> %s:%d (errno=%d)\n"), local_addr.get_host_addr(),
+            local_addr.get_port_number(), remote_addr.get_host_addr(), remote_addr.get_port_number(),
             ACE_OS::last_error()));
         return {};
     }
@@ -32,13 +29,10 @@ std::shared_ptr<tcp::ITcpSession> AceTcpClient::connect(const Endpoint &local, c
 
     endpoint_pair_ = {get_bound_endpoint(socket), remote};
 
-    logger_.log(logger::LogLevel::INFO, "TcpClient: %s -> %s connected",
-           endpoint_pair_.local.to_string().c_str(),
-           endpoint_pair_.remote.to_string().c_str());
+    logger_.log(logger::LogLevel::INFO, "TcpClient: %s -> %s connected", endpoint_pair_.local.to_string().c_str(),
+        endpoint_pair_.remote.to_string().c_str());
 
-    session_ = std::make_shared<AceTcpServerSession>(
-        logger_,
-        endpoint_pair_, std::move(socket), remote_addr);
+    session_ = std::make_shared<AceTcpServerSession>(logger_, endpoint_pair_, std::move(socket), remote_addr);
 
     return session_;
 }
@@ -49,8 +43,6 @@ void AceTcpClient::disconnect() {
         session_.reset();
 
         logger_.log(logger::LogLevel::INFO, "TcpClient: %s -> %s disconnected",
-               endpoint_pair_.local.to_string().c_str(),
-               endpoint_pair_.remote.to_string().c_str());
+            endpoint_pair_.local.to_string().c_str(), endpoint_pair_.remote.to_string().c_str());
     }
 }
-

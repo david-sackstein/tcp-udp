@@ -1,13 +1,13 @@
-#include <libtcp/Exports.h>
 #include <libargsparser/Exports.h>
 #include <liblogger/Exports.h>
+#include <libtcp/Exports.h>
 #include <iostream>
 
 int main(int argc, char* argv[]) {
     auto logger = logger::create_console_logger(logger::LogLevel::ERROR);
-    
+
     const auto& local_addresses = tcp::get_local_ipv4_addresses();
-    
+
     std::string listen_endpoint_str = get_listen_endpoint(argc, argv, local_addresses);
     Endpoint listen_ep = Endpoint::from_string(listen_endpoint_str);
 
@@ -19,7 +19,7 @@ int main(int argc, char* argv[]) {
 
     server->start();
     server->stop();
-    
+
     logger->log(logger::LogLevel::INFO, "tcp_echo_server shut down");
     return 0;
 }

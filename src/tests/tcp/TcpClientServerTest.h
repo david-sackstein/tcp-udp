@@ -2,8 +2,8 @@
 
 #include <background/BackgroundRunner.h>
 #include <common/server/IBackgroundServer.h>
-#include <libtcp/server/ITcpClientHandler.h>
 #include <liblogger/ILogger.h>
+#include <libtcp/server/ITcpClientHandler.h>
 
 #include <gtest/gtest.h>
 
@@ -17,7 +17,7 @@ protected:
 
 private:
     static constexpr size_t BUFFER_SIZE = 1024;
-    
+
     std::unique_ptr<tcp::ITcpClientHandler> client_handler_;
     std::unique_ptr<IBackgroundServer> server_;
     std::unique_ptr<logger::ILogger> logger_;

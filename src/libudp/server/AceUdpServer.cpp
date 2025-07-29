@@ -1,18 +1,17 @@
 #include "AceUdpServer.h"
 #include "AceUdpClientSession.h"
 
-#include <libacetools/ISocketIO.h>
 #include <libacetools/Exports.h>
+#include <libacetools/ISocketIO.h>
 
 #include <ace/INET_Addr.h>
 #include <ace/Log_Msg.h>
 
 #include <iostream>
 
-AceUdpServer::AceUdpServer(
-    logger::ILogger &logger,
-    const Endpoint &local_endpoint,
-    udp::IUdpClientHandler &handler,
+AceUdpServer::AceUdpServer(logger::ILogger& logger,
+    const Endpoint& local_endpoint,
+    udp::IUdpClientHandler& handler,
     std::shared_ptr<ACE_Reactor> external_reactor)
     : logger_(logger),
       reactor_(external_reactor ? std::move(external_reactor) : std::make_shared<ACE_Reactor>()),
@@ -36,7 +35,7 @@ AceUdpServer::~AceUdpServer() {
     logger_.log(logger::LogLevel::INFO, "UdpServer: %s socket closed", local_endpoint_.to_string().c_str());
 }
 
-const Endpoint &AceUdpServer::get_local_endpoint() const {
+const Endpoint& AceUdpServer::get_local_endpoint() const {
     return local_endpoint_;
 }
 
@@ -74,7 +73,7 @@ void AceUdpServer::stop_all_tasks() {
     // is_cancelled_ was passed to each task. Tasks are expected to return a short time after
     is_cancelled_ = true;
 
-    for (auto &task: tasks_) {
+    for (auto& task : tasks_) {
         task->stop();
     }
 

@@ -1,8 +1,8 @@
 #pragma once
 
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
-#include <chrono>
 
 namespace common {
 
@@ -19,4 +19,4 @@ static constexpr size_t LARGE_BUFFER_SIZE = 2048;
 static constexpr auto SHORT_TIMEOUT = std::chrono::milliseconds{100};
 static constexpr auto STANDARD_TIMEOUT = std::chrono::milliseconds{1000};
 
-} 
+} // namespace common

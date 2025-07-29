@@ -8,20 +8,20 @@
 
 namespace tcp {
 
-    class ITcpSession {
-    public:
-        virtual ~ITcpSession() = default;
+class ITcpSession {
+public:
+    virtual ~ITcpSession() = default;
 
-        [[nodiscard]] virtual Endpoint get_peer() const = 0;
-        [[nodiscard]] virtual int get_socket() const = 0;
+    [[nodiscard]] virtual Endpoint get_peer() const = 0;
+    [[nodiscard]] virtual int get_socket() const = 0;
 
-        // pass block = std::chrono::milliseconds::max() to truly block (don't)
+    // pass block = std::chrono::milliseconds::max() to truly block (don't)
 
-        virtual IOResult read(Buffer buffer, std::chrono::milliseconds timeout) = 0;
+    virtual IOResult read(Buffer buffer, std::chrono::milliseconds timeout) = 0;
 
-        virtual IOResult write(ConstBuffer buffer, std::chrono::milliseconds timeout) = 0;
+    virtual IOResult write(ConstBuffer buffer, std::chrono::milliseconds timeout) = 0;
 
-        virtual void close() = 0;
-    };
+    virtual void close() = 0;
+};
 
-}
+} // namespace tcp

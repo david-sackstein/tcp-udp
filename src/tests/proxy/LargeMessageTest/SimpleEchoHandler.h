@@ -1,8 +1,8 @@
 #pragma once
 
-#include <libtcp/server/ITcpClientHandler.h>
-#include <liblogger/ILogger.h>
 #include <common/task/ITask.h>
+#include <liblogger/ILogger.h>
+#include <libtcp/server/ITcpClientHandler.h>
 
 #include <memory>
 
@@ -16,6 +16,6 @@ public:
 private:
     static constexpr size_t BUFFER_SIZE = 1024;
     static constexpr auto TIMEOUT_MS = std::chrono::milliseconds{100};
-    
+
     logger::ILogger& logger_;
-}; 
+};

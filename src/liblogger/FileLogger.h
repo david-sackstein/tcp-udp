@@ -17,4 +17,4 @@ private:
     LogLevel level_;
 };
 
-} 
+} // namespace logger

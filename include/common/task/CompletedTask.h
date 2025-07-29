@@ -6,4 +6,4 @@ class CompletedTask final : public ITask {
 public:
     CompletedTask() = default;
     void stop() override {}
-}; 
+};

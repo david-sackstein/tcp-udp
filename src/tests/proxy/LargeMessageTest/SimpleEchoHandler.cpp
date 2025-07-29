@@ -1,7 +1,7 @@
 #include "SimpleEchoHandler.h"
 
-#include <common/task/RunningTask.h>
 #include <common/OwnedBuffer.h>
+#include <common/task/RunningTask.h>
 #include <libacetools/IOResultCode.h>
 #include <libtcp/ITcpSession.h>
 
@@ -21,9 +21,10 @@ std::unique_ptr<ITask> SimpleEchoHandler::handle_client(std::unique_ptr<tcp::ITc
 
         while (!cancelled) {
             auto read_result = shared_session->read(buffer_in.view(), TIMEOUT_MS);
-            
+
             if (read_result.code == IOResultCode::Error) {
-                shared_this->logger_.log(logger::LogLevel::ERROR, "SimpleEchoHandler: failed to read: %s", read_result.error_message.c_str());
+                shared_this->logger_.log(logger::LogLevel::ERROR, "SimpleEchoHandler: failed to read: %s",
+                    read_result.error_message.c_str());
                 break;
             }
 
@@ -40,9 +41,10 @@ std::unique_ptr<ITask> SimpleEchoHandler::handle_client(std::unique_ptr<tcp::ITc
             ConstBuffer buffer_out(buffer_in.view().data, read_result.count);
 
             auto write_result = shared_session->write(buffer_out, TIMEOUT_MS);
-            
+
             if (write_result.code == IOResultCode::Error) {
-                shared_this->logger_.log(logger::LogLevel::ERROR, "SimpleEchoHandler: failed to write: %s", write_result.error_message.c_str());
+                shared_this->logger_.log(logger::LogLevel::ERROR, "SimpleEchoHandler: failed to write: %s",
+                    write_result.error_message.c_str());
                 break;
             }
 
@@ -56,4 +58,4 @@ std::unique_ptr<ITask> SimpleEchoHandler::handle_client(std::unique_ptr<tcp::ITc
             }
         }
     });
-} 
+}

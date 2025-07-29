@@ -1,34 +1,30 @@
 #include "TcpServerProxy.h"
 
-#include <libtcpserverproxy/Exports.h>
 #include <libtcp/Exports.h>
 #include <libtcp/InternalExports.h>
+#include <libtcpserverproxy/Exports.h>
 #include <libudp/Exports.h>
 #include <libudp/InternalExports.h>
 #include <libudp/client/AceUdpClient.h>
 
 #include <utility>
 
-TcpServerProxy::TcpServerProxy(logger::ILogger &logger, Endpoint local_endpoint, Endpoint udp_proxy)
+TcpServerProxy::TcpServerProxy(logger::ILogger& logger, Endpoint local_endpoint, Endpoint udp_proxy)
     : local_endpoint_(std::move(local_endpoint)),
       udp_proxy_(std::move(udp_proxy)),
       reactor_(std::make_shared<ACE_Reactor>()),
       logger_(logger) {
     // Create UDP client on any available port (ephemeral) for sending to client proxy
     udp_client_ = udp::create_udp_client(logger_, Endpoint::any_loop_back());
-    
+
     // Create UDP handler for receiving responses from client proxy
     udp_handler_ = std::make_unique<ServerProxyUdpHandler>(logger_);
-    
+
     // Create TCP handler for accepting client connections
-    tcp_handler_ = std::make_unique<ServerProxyClientHandler>(
-        logger_,
-        udp_proxy_,
-        *udp_client_,
-        udp_handler_.get());
+    tcp_handler_ = std::make_unique<ServerProxyClientHandler>(logger_, udp_proxy_, *udp_client_, udp_handler_.get());
 }
 
-const Endpoint &TcpServerProxy::get_local_endpoint() const {
+const Endpoint& TcpServerProxy::get_local_endpoint() const {
     return local_endpoint_;
 }
 
@@ -40,7 +36,7 @@ void TcpServerProxy::start() {
     } else {
         logger_.log(logger::LogLevel::ERROR, "TcpServerProxy: Failed to register UDP client socket with reactor");
     }
-    
+
     // Create TCP server with shared reactor
     tcp_server_ = tcp::create_tcp_server(logger_, local_endpoint_, *tcp_handler_, reactor_);
     tcp_server_->start();
@@ -51,7 +47,7 @@ void TcpServerProxy::stop() {
         reactor_->remove_handler(this, ACE_Event_Handler::READ_MASK);
         reactor_registered_ = false;
     }
-    
+
     if (tcp_server_) {
         tcp_server_->stop();
     }

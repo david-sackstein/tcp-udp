@@ -3,27 +3,25 @@
 
 #include <libacetools/Exports.h>
 
-#include <ace/Log_Msg.h>
 #include <ace/INET_Addr.h>
+#include <ace/Log_Msg.h>
 #include <ace/Reactor.h>
 
 #include <iostream>
 
-AceTcpServerAcceptor::AceTcpServerAcceptor(logger::ILogger &logger, ACE_Reactor &reactor, tcp::ITcpClientHandler &handler)
-    : reactor_(reactor),
-      client_handler_(handler),
-      logger_(logger) {
-}
+AceTcpServerAcceptor::AceTcpServerAcceptor(logger::ILogger& logger,
+    ACE_Reactor& reactor,
+    tcp::ITcpClientHandler& handler)
+    : reactor_(reactor), client_handler_(handler), logger_(logger) {}
 
-int AceTcpServerAcceptor::open(const Endpoint &local_endpoint) {
+int AceTcpServerAcceptor::open(const Endpoint& local_endpoint) {
     ACE_INET_Addr listen_addr = to_ace_addr(local_endpoint);
 
     if (acceptor_.open(listen_addr, 1) == -1) {
         ACE_ERROR_RETURN(
-            (LM_ERROR, ACE_TEXT("Failed to open acceptor on %s, errno: %d (%s)\n"),
-                local_endpoint.to_string().c_str(),
-                ACE_OS::last_error(),
-                ACE_OS::strerror(ACE_OS::last_error())), -1);
+            (LM_ERROR, ACE_TEXT("Failed to open acceptor on %s, errno: %d (%s)\n"), local_endpoint.to_string().c_str(),
+                ACE_OS::last_error(), ACE_OS::strerror(ACE_OS::last_error())),
+            -1);
     }
 
     // Update to the actual bound address (handles ephemeral port)
@@ -31,8 +29,7 @@ int AceTcpServerAcceptor::open(const Endpoint &local_endpoint) {
 
     if (reactor_.register_handler(this, ACE_Event_Handler::READ_MASK) == -1) {
         ACE_ERROR((LM_ERROR, ACE_TEXT("Failed to register handler with reactor, errno: %d (%s)\n"),
-            ACE_OS::last_error(),
-            ACE_OS::strerror(ACE_OS::last_error())));
+            ACE_OS::last_error(), ACE_OS::strerror(ACE_OS::last_error())));
         acceptor_.close();
         return -1;
     }
@@ -52,8 +49,7 @@ int AceTcpServerAcceptor::handle_input(ACE_HANDLE) {
     // Set linger timeout to prevent socket lingering
     get_socket_io().set_linger_timeout(client_socket);
 
-    auto client_session = std::make_unique<AceTcpClientSession>(
-        logger_, local_endpoint_, client_socket, client_addr);
+    auto client_session = std::make_unique<AceTcpClientSession>(logger_, local_endpoint_, client_socket, client_addr);
 
     std::unique_ptr<ITask> connection_task = client_handler_.handle_client(std::move(client_session));
 
@@ -80,7 +76,7 @@ void AceTcpServerAcceptor::stop_all_tasks() {
     // is_cancelled_ was passed to each task. Tasks are expected to return a short time after
     is_cancelled_ = true;
 
-    for (auto &task: tasks_) {
+    for (auto& task : tasks_) {
         task->stop();
     }
 

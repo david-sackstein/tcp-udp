@@ -3,4 +3,4 @@
 class ISignalRegistration {
 public:
     virtual ~ISignalRegistration() = default;
-}; 
+};

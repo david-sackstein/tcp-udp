@@ -7,11 +7,11 @@
 
 namespace udp {
 
-    class IUdpClientHandler {
-    public:
-        virtual ~IUdpClientHandler() = default;
+class IUdpClientHandler {
+public:
+    virtual ~IUdpClientHandler() = default;
 
-        virtual std::unique_ptr<ITask> handle_client(IUdpSession& client_session) = 0;
-    };
+    virtual std::unique_ptr<ITask> handle_client(IUdpSession& client_session) = 0;
+};
 
-}
+} // namespace udp

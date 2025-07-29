@@ -2,13 +2,11 @@
 
 #include "BackgroundServer.h"
 
-#include <future>
 #include <functional>
+#include <future>
 
-inline std::unique_ptr<IBackgroundServer> startServer(
-    std::function<std::unique_ptr<IBlockingServer>()> factory,
+inline std::unique_ptr<IBackgroundServer> startServer(std::function<std::unique_ptr<IBlockingServer>()> factory,
     std::function<void(IBlockingServer&)> runner) {
-    
     std::promise<std::shared_ptr<IBlockingServer>> promise;
     auto future = promise.get_future();
 
@@ -21,4 +19,3 @@ inline std::unique_ptr<IBackgroundServer> startServer(
 
     return std::make_unique<BackgroundServer>(std::move(t), future.get());
 }
-

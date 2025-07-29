@@ -12,7 +12,10 @@
 
 class ClientProxyUdpHandler final : public udp::IUdpClientHandler {
 public:
-    ClientProxyUdpHandler(logger::ILogger& logger, Endpoint local_endpoint, Endpoint tcp_server, std::shared_ptr<ACE_Reactor> reactor);
+    ClientProxyUdpHandler(logger::ILogger& logger,
+        Endpoint local_endpoint,
+        Endpoint tcp_server,
+        std::shared_ptr<ACE_Reactor> reactor);
 
     std::unique_ptr<ITask> handle_client(udp::IUdpSession& client_session) override;
 
@@ -23,4 +26,4 @@ private:
     const Endpoint local_endpoint_;
     std::unique_ptr<UdpSessionHandler> udp_session_handler_;
     std::unique_ptr<BindingManager> binding_manager_;
-}; 
+};

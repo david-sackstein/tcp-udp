@@ -1,6 +1,6 @@
 #pragma once
 
-#include <vector>
 #include <string>
+#include <vector>
 
 std::vector<std::string> get_local_ipv4_addresses();

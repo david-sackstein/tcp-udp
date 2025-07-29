@@ -1,5 +1,5 @@
-#include "ClientKeyManager.h"
 #include "ServerProxyClientHandler.h"
+#include "ClientKeyManager.h"
 #include "ServerProxyUdpHandler.h"
 #include "SessionManager.h"
 #include "UdpForwarder.h"
@@ -7,10 +7,9 @@
 #include <common/Endpoint.h>
 #include <libudp/client/IUdpClient.h>
 
-ServerProxyClientHandler::ServerProxyClientHandler(
-    logger::ILogger& logger,
+ServerProxyClientHandler::ServerProxyClientHandler(logger::ILogger& logger,
     Endpoint udp_proxy,
-    udp::IUdpClient &udp_client,
+    udp::IUdpClient& udp_client,
     ServerProxyUdpHandler* udp_handler)
     : logger_(logger),
       udp_handler_(udp_handler),
@@ -26,13 +25,9 @@ std::unique_ptr<ITask> ServerProxyClientHandler::handle_client(std::unique_ptr<t
     udp_handler_->register_tcp_session(client_key, shared_session);
 
     return session_manager_->createSessionTask(
-        shared_session,
-        client_key,
+        shared_session, client_key,
         [this](tcp::ITcpSession& session, const std::string& key, std::atomic<bool>& cancelled) {
             udp_forwarder_->forwardTcpToUdp(session, key, cancelled);
         },
-        [this](const std::string& key) {
-            udp_handler_->unregister_tcp_session(key);
-        }
-    );
+        [this](const std::string& key) { udp_handler_->unregister_tcp_session(key); });
 }

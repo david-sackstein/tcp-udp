@@ -6,23 +6,25 @@
 
 static std::chrono::milliseconds block = std::chrono::milliseconds::max();
 
-IOResult SocketIO::read(
-    ACE_SOCK_Stream &socket, Buffer buffer, std::chrono::milliseconds timeout) {
+IOResult SocketIO::read(ACE_SOCK_Stream& socket, Buffer buffer, std::chrono::milliseconds timeout) {
     return from_size(socket_read_to_size(socket, buffer, timeout));
 }
 
-IOResult SocketIO::write(
-    ACE_SOCK_Stream &socket, ConstBuffer buffer, std::chrono::milliseconds timeout) {
+IOResult SocketIO::write(ACE_SOCK_Stream& socket, ConstBuffer buffer, std::chrono::milliseconds timeout) {
     return from_size(socket_write_to_size(socket, buffer, timeout));
 }
 
-IOResult SocketIO::read_from(
-    ACE_SOCK_Dgram &socket, Buffer buffer, ACE_INET_Addr &sender, std::chrono::milliseconds timeout) {
+IOResult SocketIO::read_from(ACE_SOCK_Dgram& socket,
+    Buffer buffer,
+    ACE_INET_Addr& sender,
+    std::chrono::milliseconds timeout) {
     return from_size(socket_read_from_to_size(socket, buffer, sender, timeout));
 }
 
-IOResult SocketIO::write(
-    ACE_SOCK_Dgram &socket, ConstBuffer buffer, const ACE_INET_Addr &dest, std::chrono::milliseconds timeout) {
+IOResult SocketIO::write(ACE_SOCK_Dgram& socket,
+    ConstBuffer buffer,
+    const ACE_INET_Addr& dest,
+    std::chrono::milliseconds timeout) {
     return from_size(socket_write_to_size(socket, buffer, dest, timeout));
 }
 
@@ -33,7 +35,7 @@ void SocketIO::set_linger_timeout(ACE_SOCK_Stream& socket) {
 
 // private
 
-ssize_t SocketIO::socket_read_to_size(ACE_SOCK_Stream &socket, Buffer buffer, std::chrono::milliseconds timeout) {
+ssize_t SocketIO::socket_read_to_size(ACE_SOCK_Stream& socket, Buffer buffer, std::chrono::milliseconds timeout) {
     if (timeout == block) {
         return socket.recv(buffer.data, static_cast<int>(buffer.size));
     }
@@ -41,7 +43,7 @@ ssize_t SocketIO::socket_read_to_size(ACE_SOCK_Stream &socket, Buffer buffer, st
     return socket.recv(buffer.data, static_cast<int>(buffer.size), &ace_timeout);
 }
 
-ssize_t SocketIO::socket_write_to_size(ACE_SOCK_Stream &socket, ConstBuffer buffer, std::chrono::milliseconds timeout) {
+ssize_t SocketIO::socket_write_to_size(ACE_SOCK_Stream& socket, ConstBuffer buffer, std::chrono::milliseconds timeout) {
     if (timeout == block) {
         return socket.send(buffer.data, static_cast<int>(buffer.size));
     }
@@ -49,8 +51,10 @@ ssize_t SocketIO::socket_write_to_size(ACE_SOCK_Stream &socket, ConstBuffer buff
     return socket.send(buffer.data, static_cast<int>(buffer.size), &ace_timeout);
 }
 
-ssize_t SocketIO::socket_read_from_to_size(ACE_SOCK_Dgram &socket, Buffer buffer, ACE_INET_Addr &sender,
-                                           std::chrono::milliseconds timeout) {
+ssize_t SocketIO::socket_read_from_to_size(ACE_SOCK_Dgram& socket,
+    Buffer buffer,
+    ACE_INET_Addr& sender,
+    std::chrono::milliseconds timeout) {
     if (timeout == block) {
         return socket.recv(buffer.data, static_cast<int>(buffer.size), sender);
     }
@@ -58,8 +62,10 @@ ssize_t SocketIO::socket_read_from_to_size(ACE_SOCK_Dgram &socket, Buffer buffer
     return socket.recv(buffer.data, static_cast<int>(buffer.size), sender, 0, &ace_timeout);
 }
 
-ssize_t SocketIO::socket_write_to_size(ACE_SOCK_Dgram &socket, ConstBuffer buffer, const ACE_INET_Addr &dest,
-                                       std::chrono::milliseconds timeout) {
+ssize_t SocketIO::socket_write_to_size(ACE_SOCK_Dgram& socket,
+    ConstBuffer buffer,
+    const ACE_INET_Addr& dest,
+    std::chrono::milliseconds timeout) {
     if (timeout == block) {
         return socket.send(buffer.data, static_cast<int>(buffer.size), dest);
     }

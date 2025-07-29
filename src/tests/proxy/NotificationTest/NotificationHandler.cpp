@@ -13,9 +13,9 @@ NotificationHandler::NotificationHandler(logger::ILogger& logger) : logger_(logg
 
 std::unique_ptr<ITask> NotificationHandler::handle_client(std::unique_ptr<tcp::ITcpSession> client_session) {
     std::shared_ptr shared_session = std::move(client_session);
-    
+
     logger_.log(logger::LogLevel::INFO, "NotificationHandler: New client connected");
-    
+
     // Add this session to our tracked sessions
     {
         std::lock_guard<std::mutex> lock(sessions_mutex_);
@@ -28,9 +28,8 @@ std::unique_ptr<ITask> NotificationHandler::handle_client(std::unique_ptr<tcp::I
 
         while (!cancelled) {
             auto read_result = shared_session->read(buffer_in.view(), TIMEOUT_MS);
-            
-            if (read_result.code == IOResultCode::Error || 
-                read_result.code == IOResultCode::ConnectionClosed) {
+
+            if (read_result.code == IOResultCode::Error || read_result.code == IOResultCode::ConnectionClosed) {
                 logger_.log(logger::LogLevel::INFO, "NotificationHandler: Client disconnected");
                 break;
             }
@@ -40,8 +39,9 @@ std::unique_ptr<ITask> NotificationHandler::handle_client(std::unique_ptr<tcp::I
             }
 
             std::string received_message(buffer_in.view().data, read_result.count);
-            logger_.log(logger::LogLevel::INFO, "NotificationHandler: Received message: '%s'", received_message.c_str());
-            
+            logger_.log(
+                logger::LogLevel::INFO, "NotificationHandler: Received message: '%s'", received_message.c_str());
+
             // Send echo response to the sender
             std::string echo_response = "echo [" + received_message + "]";
             ConstBuffer echo_buffer(echo_response.data(), echo_response.size());
@@ -51,9 +51,10 @@ std::unique_ptr<ITask> NotificationHandler::handle_client(std::unique_ptr<tcp::I
             // Send notification to all OTHER clients
             std::string notification = "notify [" + received_message + "]";
             ConstBuffer notify_buffer(notification.data(), notification.size());
-            
+
             std::lock_guard<std::mutex> lock(sessions_mutex_);
-            logger_.log(logger::LogLevel::INFO, "NotificationHandler: Sending notifications to %zu other clients", active_sessions_.size() - 1);
+            logger_.log(logger::LogLevel::INFO, "NotificationHandler: Sending notifications to %zu other clients",
+                active_sessions_.size() - 1);
             for (auto& session : active_sessions_) {
                 if (session.get() != shared_session.get()) {
                     auto notify_result = session->write(notify_buffer, TIMEOUT_MS);
@@ -61,15 +62,16 @@ std::unique_ptr<ITask> NotificationHandler::handle_client(std::unique_ptr<tcp::I
                 }
             }
         }
-        
+
         // Remove this session from active sessions when done
         {
             std::lock_guard<std::mutex> lock(sessions_mutex_);
             auto it = std::find(active_sessions_.begin(), active_sessions_.end(), shared_session);
             if (it != active_sessions_.end()) {
                 active_sessions_.erase(it);
-                logger_.log(logger::LogLevel::INFO, "NotificationHandler: Removed session, remaining: %zu", active_sessions_.size());
+                logger_.log(logger::LogLevel::INFO, "NotificationHandler: Removed session, remaining: %zu",
+                    active_sessions_.size());
             }
         }
     });
-} 
+}

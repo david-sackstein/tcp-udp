@@ -15,4 +15,4 @@ public:
 
 private:
     logger::ILogger& logger_;
-}; 
+};

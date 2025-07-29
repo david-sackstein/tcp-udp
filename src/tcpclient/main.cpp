@@ -49,7 +49,8 @@ int main() {
     if (response == expected_response) {
         logger->log(logger::LogLevel::INFO, "✓ Echo test successful! Server correctly echoed: %s", response.c_str());
     } else {
-        logger->log(logger::LogLevel::ERROR, "✗ Echo test failed! Expected: %s, Got: %s", expected_response.c_str(), response.c_str());
+        logger->log(logger::LogLevel::ERROR, "✗ Echo test failed! Expected: %s, Got: %s", expected_response.c_str(),
+            response.c_str());
     }
 
     client->disconnect();

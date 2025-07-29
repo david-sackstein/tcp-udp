@@ -1,7 +1,7 @@
 #pragma once
 
-#include "libudp/server/IUdpClientHandler.h"
 #include <liblogger/ILogger.h>
+#include "libudp/server/IUdpClientHandler.h"
 
 class UdpEchoHandler final : public udp::IUdpClientHandler {
 public:

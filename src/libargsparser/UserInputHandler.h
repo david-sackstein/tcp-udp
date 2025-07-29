@@ -9,4 +9,4 @@ public:
     static std::string get_user_string_input(const std::string& prompt);
     static int select_port();
     static std::string select_remote_endpoint();
-}; 
+};

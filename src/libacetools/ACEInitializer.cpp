@@ -5,7 +5,7 @@
 
 ACEInitializer::ACEInitializer() {
     ACE::init();
-    
+
     local_addresses_ = get_local_ipv4_addresses();
     local_addresses_.insert(local_addresses_.begin(), "0.0.0.0");
 }

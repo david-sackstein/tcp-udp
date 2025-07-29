@@ -3,27 +3,26 @@
 #include <common/OwnedBuffer.h>
 #include <liblogger/Exports.h>
 #include <libtcp/Exports.h>
-#include <libtcpserverproxy/Exports.h>
-#include <libtcpclientproxy/Exports.h>
 #include <libtcp/client/ITcpClient.h>
+#include <libtcpclientproxy/Exports.h>
+#include <libtcpserverproxy/Exports.h>
 
-#include <string>
 #include <sstream>
+#include <string>
 
 static std::chrono::milliseconds block = std::chrono::milliseconds::max();
 
 TEST_F(ProxyChainTest, EndToEnd) {
     auto client = tcp::create_tcp_client(*logger_);
 
-    std::shared_ptr<tcp::ITcpSession> session = client->connect(
-        Endpoint::loop_back(TCP_CLIENT_PORT),
-        Endpoint::loop_back(TCP_SERVER_PROXY_PORT));
+    std::shared_ptr<tcp::ITcpSession> session =
+        client->connect(Endpoint::loop_back(TCP_CLIENT_PORT), Endpoint::loop_back(TCP_SERVER_PROXY_PORT));
 
     ASSERT_TRUE(session);
 
     auto msg = "hello";
     auto size = session->write(ConstBuffer(msg, 5), block);
-    (void) size;
+    (void)size;
 
     OwnedBuffer buffer(BUFFER_SIZE);
 
@@ -39,9 +38,8 @@ TEST_F(ProxyChainTest, EndToEnd) {
 TEST_F(ProxyChainTest, StressTest) {
     auto client = tcp::create_tcp_client(*logger_);
 
-    std::shared_ptr<tcp::ITcpSession> session = client->connect(
-        Endpoint::loop_back(TCP_CLIENT_PORT),
-        Endpoint::loop_back(TCP_SERVER_PROXY_PORT));
+    std::shared_ptr<tcp::ITcpSession> session =
+        client->connect(Endpoint::loop_back(TCP_CLIENT_PORT), Endpoint::loop_back(TCP_SERVER_PROXY_PORT));
 
     ASSERT_TRUE(session);
 
@@ -83,19 +81,12 @@ void ProxyChainTest::SetUp() {
     client_handler_ = tcp::create_tcp_echo_handler(*logger_);
 
     serverProxy_ = server_proxy::start_tcp_server_proxy(
-        *logger_,
-        Endpoint::loop_back(TCP_SERVER_PROXY_PORT),
-        Endpoint::loop_back(TCP_CLIENT_PROXY_PORT));
+        *logger_, Endpoint::loop_back(TCP_SERVER_PROXY_PORT), Endpoint::loop_back(TCP_CLIENT_PROXY_PORT));
 
     clientProxy_ = client_proxy::start_tcp_client_proxy(
-        *logger_,
-        Endpoint::loop_back(TCP_CLIENT_PROXY_PORT),
-        Endpoint::loop_back(TCP_SERVER_PORT));
+        *logger_, Endpoint::loop_back(TCP_CLIENT_PROXY_PORT), Endpoint::loop_back(TCP_SERVER_PORT));
 
-    tcp_server_ = tcp::start_tcp_server(
-        *logger_,
-        Endpoint::loop_back(TCP_SERVER_PORT),
-        *client_handler_);
+    tcp_server_ = tcp::start_tcp_server(*logger_, Endpoint::loop_back(TCP_SERVER_PORT), *client_handler_);
 }
 
 void ProxyChainTest::TearDown() {

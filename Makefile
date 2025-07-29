@@ -37,7 +37,7 @@ GTEST_OPTS :=
 
 # ================================
 # Phony Targets
-.PHONY: all clean tests proxytest tcptest udptest notificationtest bin build
+.PHONY: all clean tests proxytest tcptest udptest notificationtest bin build format format-check install-clang-format
 
 # ================================
 # Directory Creation
@@ -140,8 +140,22 @@ $(TESTS): $(TEST_OBJS) $(LIBTCP) $(LIBUDP) $(LIBACETOOLS) $(LIBTCPCLIENTPROXY) $
 	$(CXX) -o $@ $^ $(LDFLAGS) -L$(BIN_DIR) -ltcp -ludp -ltcpclientproxy -ltcpserverproxy -largsparser -lacetools -llogger $(GTEST_LIBS)
 
 # ================================
+# Clang-format Installation Target
+install-clang-format:
+	@echo "Installing clang-format..."
+	@./scripts/install_clang_format.sh || echo "clang-format installation failed, but build will continue"
+
+# Format Target
+format:
+	@./scripts/apply_formatting.sh
+
+# Format check target (doesn't modify files)
+format-check:
+	@./scripts/check_formatting.sh
+
+# ================================
 # Default Target: Build Everything
-all: $(LIBACETOOLS) $(LIBTCP) $(LIBUDP) $(LIBTCPCLIENTPROXY) $(LIBTCPSERVERPROXY) \
+all: format $(LIBACETOOLS) $(LIBTCP) $(LIBUDP) $(LIBTCPCLIENTPROXY) $(LIBTCPSERVERPROXY) \
      $(TCPCLIENT) $(TCP_ECHO_SERVER) $(UDP_ECHO_SERVER) $(TCPCLIENTPROXY) $(TCPSERVERPROXY) $(TESTS)
 
 # ================================

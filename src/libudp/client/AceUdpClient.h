@@ -1,11 +1,11 @@
 #pragma once
 
-#include <libudp/client/IUdpClient.h>
 #include <common/Buffer.h>
 #include <liblogger/ILogger.h>
+#include <libudp/client/IUdpClient.h>
 
-#include <ace/SOCK_Dgram.h>
 #include <ace/INET_Addr.h>
+#include <ace/SOCK_Dgram.h>
 
 #include <string>
 
@@ -22,7 +22,9 @@ public:
     ssize_t receive_from(Buffer buffer, Endpoint& sender) override;
 
     // For reactor integration
-    [[nodiscard]] ACE_HANDLE get_socket() const { return socket_.get_handle(); }
+    [[nodiscard]] ACE_HANDLE get_socket() const {
+        return socket_.get_handle();
+    }
 
 private:
     Endpoint local_endpoint_;

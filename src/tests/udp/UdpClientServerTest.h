@@ -1,9 +1,9 @@
 #pragma once
 
-#include <common/server/IBackgroundServer.h>
 #include <background/BackgroundRunner.h>
-#include <libudp/server/IUdpClientHandler.h>
+#include <common/server/IBackgroundServer.h>
 #include <liblogger/ILogger.h>
+#include <libudp/server/IUdpClientHandler.h>
 
 #include <gtest/gtest.h>
 
@@ -16,7 +16,7 @@ protected:
 
 private:
     static constexpr size_t BUFFER_SIZE = 1024;
-    
+
     std::unique_ptr<logger::ILogger> logger_;
     std::unique_ptr<udp::IUdpClientHandler> client_handler_;
     std::unique_ptr<IBackgroundServer> server_;

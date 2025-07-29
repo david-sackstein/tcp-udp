@@ -3,18 +3,14 @@
 #include "ITask.h"
 
 #include <atomic>
-#include <thread>
 #include <functional>
+#include <thread>
 
 class RunningTask final : public ITask {
 public:
-    using Work = std::function<void(std::atomic<bool> &)>;
+    using Work = std::function<void(std::atomic<bool>&)>;
 
-    explicit RunningTask(const Work& work) :
-        cancelled_(false),
-        thread_([this, work] {
-            work(cancelled_);
-        }) {}
+    explicit RunningTask(const Work& work) : cancelled_(false), thread_([this, work] { work(cancelled_); }) {}
 
     ~RunningTask() override {
         cancelled_.store(true);
