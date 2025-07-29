@@ -44,7 +44,7 @@ TcpClientProxyUdpHandler::get_or_create_binding(const std::string &source_key, u
 
 TcpClientProxyUdpHandler::BindingPtr& TcpClientProxyUdpHandler::create_binding(const std::string &source_key, udp::IUdpSession& udp_session, const Endpoint& udp_sender) {
     auto client = std::unique_ptr(tcp::create_tcp_client(logger_));
-    auto session = client->connect(local_endpoint_, tcp_server_endpoint_);
+    auto session = client->connect(Endpoint::any_loop_back(), tcp_server_endpoint_);
 
     if (!session) {
         throw std::runtime_error("Failed to connect to TCP server");

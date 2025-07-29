@@ -21,6 +21,9 @@ public:
     bool send_to(const Endpoint& remote, ConstBuffer buffer) override;
     ssize_t receive_from(Buffer buffer, Endpoint& sender) override;
 
+    // For reactor integration
+    [[nodiscard]] ACE_HANDLE get_socket() const { return socket_.get_handle(); }
+
 private:
     Endpoint local_endpoint_;
     ACE_SOCK_Dgram socket_;
