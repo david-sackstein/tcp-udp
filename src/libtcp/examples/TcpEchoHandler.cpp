@@ -34,7 +34,7 @@ std::unique_ptr<ITask> TcpEchoHandler::handle_client(std::unique_ptr<tcp::ITcpSe
 
             // Create response with "echo " prepended to the received message
             std::string received_message(buffer_in.view().data, read_result.count);
-            std::string echo_response = "echo " + received_message;
+            std::string echo_response = "echo [" + received_message + "]";
             
             // Create buffer for the echo response
             ConstBuffer buffer_out(echo_response.data(), echo_response.size());

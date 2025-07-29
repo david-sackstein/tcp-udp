@@ -198,17 +198,17 @@ void MultiClientNotificationTest::runNotificationTest(bool useProxies) {
     auto read1 = session1->read(buffer.view(), std::chrono::milliseconds(2000));
     ASSERT_EQ(IOResultCode::Success, read1.code);
     std::string response1(buffer.view().data, read1.count);
-    ASSERT_EQ("echo " + message1, response1);
+    ASSERT_EQ("echo [" + message1 + "]", response1);
     
     auto read2 = session2->read(buffer.view(), std::chrono::milliseconds(2000));
     ASSERT_EQ(IOResultCode::Success, read2.code);
     std::string response2(buffer.view().data, read2.count);
-    ASSERT_EQ("echo " + message2, response2);
+    ASSERT_EQ("echo [" + message2 + "]", response2);
     
     auto read3 = session3->read(buffer.view(), std::chrono::milliseconds(2000));
     ASSERT_EQ(IOResultCode::Success, read3.code);
     std::string response3(buffer.view().data, read3.count);
-    ASSERT_EQ("echo " + message3, response3);
+    ASSERT_EQ("echo [" + message3 + "]", response3);
     
     logger_->log(logger::LogLevel::INFO, "Multi-proxy echo test completed successfully (useProxies=%s)", useProxies ? "true" : "false");
     logger_->log(logger::LogLevel::INFO, "Client 1: sent '%s', received '%s'", message1.c_str(), response1.c_str());
@@ -372,17 +372,17 @@ void MultiClientNotificationTest::verifyNotifications(
     // Verify round 2 messages (full cross-client notifications)
     // Round 1 is skipped as behavior is timing-dependent in proxy mode
     // Each client should receive their own echo from round 2
-    ASSERT_TRUE(client1_combined.find("echo " + message1_round2) != std::string::npos);
-    ASSERT_TRUE(client2_combined.find("echo " + message2_round2) != std::string::npos);
-    ASSERT_TRUE(client3_combined.find("echo " + message3_round2) != std::string::npos);
+    ASSERT_TRUE(client1_combined.find("echo [" + message1_round2 + "]") != std::string::npos);
+    ASSERT_TRUE(client2_combined.find("echo [" + message2_round2 + "]") != std::string::npos);
+    ASSERT_TRUE(client3_combined.find("echo [" + message3_round2 + "]") != std::string::npos);
     
     // Verify cross-client notifications for round 2
-    ASSERT_TRUE(client1_combined.find("notify " + message2_round2) != std::string::npos);
-    ASSERT_TRUE(client1_combined.find("notify " + message3_round2) != std::string::npos);
+    ASSERT_TRUE(client1_combined.find("notify [" + message2_round2 + "]") != std::string::npos);
+    ASSERT_TRUE(client1_combined.find("notify [" + message3_round2 + "]") != std::string::npos);
     
-    ASSERT_TRUE(client2_combined.find("notify " + message1_round2) != std::string::npos);
-    ASSERT_TRUE(client2_combined.find("notify " + message3_round2) != std::string::npos);
+    ASSERT_TRUE(client2_combined.find("notify [" + message1_round2 + "]") != std::string::npos);
+    ASSERT_TRUE(client2_combined.find("notify [" + message3_round2 + "]") != std::string::npos);
     
-    ASSERT_TRUE(client3_combined.find("notify " + message1_round2) != std::string::npos);
-    ASSERT_TRUE(client3_combined.find("notify " + message2_round2) != std::string::npos);
+    ASSERT_TRUE(client3_combined.find("notify [" + message1_round2 + "]") != std::string::npos);
+    ASSERT_TRUE(client3_combined.find("notify [" + message2_round2 + "]") != std::string::npos);
 }

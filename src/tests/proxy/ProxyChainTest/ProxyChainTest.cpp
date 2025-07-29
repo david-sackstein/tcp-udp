@@ -30,7 +30,7 @@ TEST_F(ProxyChainTest, EndToEnd) {
     const auto result = session->read(buffer.view(), block);
 
     ASSERT_EQ(IOResultCode::Success, result.code);
-    std::string expected_response = "echo " + std::string(msg, 5);
+    std::string expected_response = "echo [" + std::string(msg, 5) + "]";
     ASSERT_STREQ(buffer.view().data, expected_response.c_str());
 
     client->disconnect();
@@ -65,7 +65,7 @@ TEST_F(ProxyChainTest, StressTest) {
 
         // Verify response
         std::string response(buffer.view().data, read_result.count);
-        std::string expected_response = "echo " + msg;
+        std::string expected_response = "echo [" + msg + "]";
         ASSERT_EQ(expected_response, response) << "Failed on request " << i;
 
         // Progress indicator every 1000 requests

@@ -27,7 +27,7 @@ void TcpClientServerTest::runTest() {
     OwnedBuffer buffer(1024);
 
     const auto read_result = session->read(buffer.view(), block);
-    const std::string expected_response = "echo " + msg;
+    const std::string expected_response = "echo [" + msg + "]";
     ASSERT_EQ(read_result.count, expected_response.size());
     ASSERT_STREQ(buffer.view().data, expected_response.data());
 

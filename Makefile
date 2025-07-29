@@ -33,7 +33,7 @@ ACE_LIB := ACE
 GTEST_LIBS := -lgtest -lgtest_main -lpthread
 
 # Google Test options
-GTEST_OPTS := --gtest_brief=1
+GTEST_OPTS :=
 
 # ================================
 # Phony Targets
