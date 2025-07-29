@@ -7,6 +7,8 @@ FileLogger::FileLogger(const std::string& filename)
     : out(filename, std::ios::app) {}
 
 void FileLogger::log(const char* format, ...) {
+    std::lock_guard lock (mutex_);
+
     va_list args;
     va_start(args, format);
     std::string msg = format_string_va(format, args);

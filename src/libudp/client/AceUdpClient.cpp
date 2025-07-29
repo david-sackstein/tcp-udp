@@ -38,7 +38,7 @@ bool AceUdpClient::send_to(const Endpoint& remote, ConstBuffer buffer) {
         ACE_ERROR_RETURN((LM_ERROR, ACE_TEXT("Failed to send UDP data\n")), false);
     }
 
-    logger_.log("UdpClient: %s -> %s sent: \"%.*s\"",
+    logger_.log("UdpClient: %s -> %s sent: '%.*s'",
            local_endpoint_.to_string().c_str(),
            remote.to_string().c_str(),
            (int)buffer.size,
@@ -56,7 +56,7 @@ ssize_t AceUdpClient::receive_from(Buffer buffer, Endpoint& sender) {
 
     sender = to_endpoint(sender_addr);
 
-    logger_.log("UdpClient: %s <- %s received: \"%.*s\"",
+    logger_.log("UdpClient: %s <- %s received: '%.*s'",
            get_bound_endpoint(socket_).to_string().c_str(),
            sender.to_string().c_str(),
            (int)received,
