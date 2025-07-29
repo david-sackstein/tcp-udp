@@ -6,6 +6,8 @@
 
 #include <stdexcept>
 
+std::chrono::milliseconds write_timeout = std::chrono::milliseconds(1000);
+
 TcpServerProxyUdpHandler::TcpServerProxyUdpHandler(logger::ILogger& logger)
     : logger_(logger) {}
 
@@ -23,19 +25,15 @@ int TcpServerProxyUdpHandler::handle_udp_input(udp::IUdpClient& udp_client) {
             return 0;
         }
 
-        // We received a UDP response from client proxy, need to forward it to the appropriate TCP client
         ConstBuffer udp_data{buffer_.view().data, static_cast<size_t>(received)};
         logger_.log("TcpServerProxyUdpHandler: Received UDP response from %s: '%s'", 
                    udp_sender.to_string().c_str(),
                    std::string(udp_data.data, udp_data.size).c_str());
 
-        // For the notification test, we might need to broadcast to all clients
-        // or implement a more sophisticated mapping scheme
-        
-        // For now, forward to all registered TCP sessions (broadcasts)
+        // Forward to all registered TCP sessions
         for (auto& [client_key, tcp_session] : tcp_sessions_) {
             if (tcp_session) {
-                auto write_result = tcp_session->write(udp_data, std::chrono::milliseconds(1000));
+                auto write_result = tcp_session->write(udp_data, write_timeout);
                 if (write_result.code == IOResultCode::Success) {
                     logger_.log("TcpServerProxyUdpHandler: Forwarded UDP response to TCP client %s", client_key.c_str());
                 } else {

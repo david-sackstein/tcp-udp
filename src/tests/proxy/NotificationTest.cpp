@@ -97,123 +97,154 @@ void MultiClientNotificationTest::SetUp() {
 }
 
 void MultiClientNotificationTest::TearDown() {
-    // Stop all servers and proxies
-    if (notification_server_) {
-        notification_server_->stop();
+    stopAllServers();
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+}
+
+void MultiClientNotificationTest::stopAllServers() {
+    logger_->log("TearDown: Stopping all servers and clients");
+    
+    // Disconnect clients first if they exist
+    if (client1_) {
+        logger_->log("TearDown: Disconnecting client1");
+        client1_->disconnect();
     }
-    if (notification_server1_) {
-        notification_server1_->stop();
+    if (client2_) {
+        logger_->log("TearDown: Disconnecting client2");
+        client2_->disconnect();
     }
-    if (notification_server2_) {
-        notification_server2_->stop();
-    }
-    if (notification_server3_) {
-        notification_server3_->stop();
-    }
-    if (clientProxy_) {
-        clientProxy_->stop();
-    }
-    if (serverProxy1_) {
-        serverProxy1_->stop();
-    }
-    if (serverProxy2_) {
-        serverProxy2_->stop();
-    }
-    if (serverProxy3_) {
-        serverProxy3_->stop();
+    if (client3_) {
+        logger_->log("TearDown: Disconnecting client3");
+        client3_->disconnect();
     }
     
-    // Give time for cleanup
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    // Stop all servers and proxies
+    if (notification_server_) notification_server_->stop();
+    if (clientProxy_) clientProxy_->stop();
+    if (serverProxy1_) serverProxy1_->stop();
+    if (serverProxy2_) serverProxy2_->stop();
+    if (serverProxy3_) serverProxy3_->stop();
+    
+    // Reset client pointers
+    client1_.reset();
+    client2_.reset();
+    client3_.reset();
+}
+
+std::vector<uint16_t> MultiClientNotificationTest::setupProxyChain(bool useNotificationHandler) {
+    logger_->log("Setting up proxy chain: clients -> server_proxies -> %u -> %u", 
+                TCP_CLIENT_PROXY_PORT, TCP_SERVER_PORT);
+    
+    // Create TCP server with appropriate handler
+    if (useNotificationHandler) {
+        notification_handler_ = std::make_unique<NotificationHandler>(*logger_);
+    } else {
+        notification_handler_ = tcp::create_tcp_echo_handler(*logger_);
+    }
+    notification_server_ = tcp::start_tcp_server(
+        *logger_,
+        Endpoint::loop_back(TCP_SERVER_PORT),
+        *notification_handler_);
+    
+    // Create one client proxy that connects to the shared TCP server
+    clientProxy_ = client_proxy::start_tcp_client_proxy(
+        *logger_,
+        Endpoint::loop_back(TCP_CLIENT_PROXY_PORT),
+        Endpoint::loop_back(TCP_SERVER_PORT));
+    
+    // Create separate server proxies for each client
+    serverProxy1_ = server_proxy::start_tcp_server_proxy(
+        *logger_,
+        Endpoint::loop_back(TCP_SERVER_PROXY1_PORT),
+        Endpoint::loop_back(TCP_CLIENT_PROXY_PORT));
+        
+    serverProxy2_ = server_proxy::start_tcp_server_proxy(
+        *logger_,
+        Endpoint::loop_back(TCP_SERVER_PROXY2_PORT),
+        Endpoint::loop_back(TCP_CLIENT_PROXY_PORT));
+        
+    serverProxy3_ = server_proxy::start_tcp_server_proxy(
+        *logger_,
+        Endpoint::loop_back(TCP_SERVER_PROXY3_PORT),
+        Endpoint::loop_back(TCP_CLIENT_PROXY_PORT));
+    
+    return {TCP_SERVER_PROXY1_PORT, TCP_SERVER_PROXY2_PORT, TCP_SERVER_PROXY3_PORT};
+}
+
+std::vector<uint16_t> MultiClientNotificationTest::setupDirectConnection(bool useNotificationHandler) {
+    logger_->log("Setting up direct connection: clients -> %u", TCP_SERVER_PORT);
+    
+    // Create TCP server with appropriate handler
+    if (useNotificationHandler) {
+        notification_handler_ = std::make_unique<NotificationHandler>(*logger_);
+    } else {
+        notification_handler_ = tcp::create_tcp_echo_handler(*logger_);
+    }
+    notification_server_ = tcp::start_tcp_server(
+        *logger_,
+        Endpoint::loop_back(TCP_SERVER_PORT),
+        *notification_handler_);
+    
+    return {TCP_SERVER_PORT, TCP_SERVER_PORT, TCP_SERVER_PORT};
+}
+
+std::array<std::shared_ptr<tcp::ITcpSession>, 3> MultiClientNotificationTest::createAndConnectClients(const std::vector<uint16_t>& target_ports) {
+    logger_->log("Creating TCP clients");
+    client1_ = tcp::create_tcp_client(*logger_);
+    client2_ = tcp::create_tcp_client(*logger_);
+    client3_ = tcp::create_tcp_client(*logger_);
+    
+    logger_->log("Connecting client1 from port %u to port %u", TCP_CLIENT1_PORT, target_ports[0]);
+    auto session1 = client1_->connect(Endpoint::loop_back(TCP_CLIENT1_PORT), Endpoint::loop_back(target_ports[0]));
+    logger_->log("Connecting client2 from port %u to port %u", TCP_CLIENT2_PORT, target_ports[1]);
+    auto session2 = client2_->connect(Endpoint::loop_back(TCP_CLIENT2_PORT), Endpoint::loop_back(target_ports[1]));
+    logger_->log("Connecting client3 from port %u to port %u", TCP_CLIENT3_PORT, target_ports[2]);
+    auto session3 = client3_->connect(Endpoint::loop_back(TCP_CLIENT3_PORT), Endpoint::loop_back(target_ports[2]));
+    
+    logger_->log("Session1 valid: %s", session1 ? "true" : "false");
+    logger_->log("Session2 valid: %s", session2 ? "true" : "false");
+    logger_->log("Session3 valid: %s", session3 ? "true" : "false");
+    
+    EXPECT_TRUE(session1);
+    EXPECT_TRUE(session2);
+    EXPECT_TRUE(session3);
+    
+    return {session1, session2, session3};
 }
 
 void MultiClientNotificationTest::runNotificationTest(bool useProxies) {
     logger_->log("Starting notification test (useProxies=%s)", useProxies ? "true" : "false");
     
-    std::vector<uint16_t> client_target_ports;
+    logger_->log("Setting up server architecture...");
+    std::vector<uint16_t> client_target_ports = useProxies 
+        ? setupProxyChain(false)  // Use echo handler
+        : setupDirectConnection(false);
     
-    if (useProxies) {
-        // Proxy architecture: 3 server proxies -> 1 client proxy -> 1 TCP server with simple echo handler
-        logger_->log("Using proxy chain: clients -> server_proxies -> %u -> %u", 
-                    TCP_CLIENT_PROXY_PORT, TCP_SERVER_PORT);
-        
-        // Create one TCP server with simple echo handler for proxy scenario
-        notification_handler_ = tcp::create_tcp_echo_handler(*logger_);
-        notification_server_ = tcp::start_tcp_server(
-            *logger_,
-            Endpoint::loop_back(TCP_SERVER_PORT),
-            *notification_handler_);
-        
-        // Create one client proxy that connects to the shared TCP server
-        clientProxy_ = client_proxy::start_tcp_client_proxy(
-            *logger_,
-            Endpoint::loop_back(TCP_CLIENT_PROXY_PORT),
-            Endpoint::loop_back(TCP_SERVER_PORT));
-        
-        // Create separate server proxies for each client
-        serverProxy1_ = server_proxy::start_tcp_server_proxy(
-            *logger_,
-            Endpoint::loop_back(TCP_SERVER_PROXY1_PORT),
-            Endpoint::loop_back(TCP_CLIENT_PROXY_PORT));
-            
-        serverProxy2_ = server_proxy::start_tcp_server_proxy(
-            *logger_,
-            Endpoint::loop_back(TCP_SERVER_PROXY2_PORT),
-            Endpoint::loop_back(TCP_CLIENT_PROXY_PORT));
-            
-        serverProxy3_ = server_proxy::start_tcp_server_proxy(
-            *logger_,
-            Endpoint::loop_back(TCP_SERVER_PROXY3_PORT),
-            Endpoint::loop_back(TCP_CLIENT_PROXY_PORT));
-        
-        // Clients connect to different server proxy ports
-        client_target_ports = {TCP_SERVER_PROXY1_PORT, TCP_SERVER_PROXY2_PORT, TCP_SERVER_PROXY3_PORT};
-    } else {
-        // Direct architecture: For now, use one TCP server (same as before)
-        logger_->log("Using direct connection: clients -> %u", TCP_SERVER_PORT);
-        
-        notification_handler_ = tcp::create_tcp_echo_handler(*logger_);
-        notification_server_ = tcp::start_tcp_server(
-            *logger_,
-            Endpoint::loop_back(TCP_SERVER_PORT),
-            *notification_handler_);
-        
-        // All clients connect to the same server for direct connection test
-        client_target_ports = {TCP_SERVER_PORT, TCP_SERVER_PORT, TCP_SERVER_PORT};
-    }
-    
-    // Give time for servers to start
+    logger_->log("Waiting for servers to start...");
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
     
-    // Create 3 TCP clients
-    auto client1 = tcp::create_tcp_client(*logger_);
-    auto client2 = tcp::create_tcp_client(*logger_);
-    auto client3 = tcp::create_tcp_client(*logger_);
+    logger_->log("Creating and connecting clients...");
+    auto [session1, session2, session3] = createAndConnectClients(client_target_ports);
     
-    // Connect each client to its dedicated server/proxy
-    auto session1 = client1->connect(Endpoint::loop_back(TCP_CLIENT1_PORT), Endpoint::loop_back(client_target_ports[0]));
-    auto session2 = client2->connect(Endpoint::loop_back(TCP_CLIENT2_PORT), Endpoint::loop_back(client_target_ports[1]));
-    auto session3 = client3->connect(Endpoint::loop_back(TCP_CLIENT3_PORT), Endpoint::loop_back(client_target_ports[2]));
-    
-    ASSERT_TRUE(session1);
-    ASSERT_TRUE(session2);
-    ASSERT_TRUE(session3);
-    
-    // Each client sends a message and expects an echo back
+    logger_->log("Preparing test messages...");
+    // Test messages
     std::string message1 = "message from client 1";
     std::string message2 = "message from client 2";
     std::string message3 = "message from client 3";
     
+    logger_->log("Sending messages...");
     // Send messages
     auto write1 = session1->write(ConstBuffer(message1.data(), message1.size()), std::chrono::milliseconds(1000));
     auto write2 = session2->write(ConstBuffer(message2.data(), message2.size()), std::chrono::milliseconds(1000));
     auto write3 = session3->write(ConstBuffer(message3.data(), message3.size()), std::chrono::milliseconds(1000));
     
+    logger_->log("Write results: %d, %d, %d", (int)write1.code, (int)write2.code, (int)write3.code);
+    
     ASSERT_EQ(IOResultCode::Success, write1.code);
     ASSERT_EQ(IOResultCode::Success, write2.code);
     ASSERT_EQ(IOResultCode::Success, write3.code);
     
-    // Read echo responses
+    // Read and verify echo responses
     OwnedBuffer buffer(1024);
     
     auto read1 = session1->read(buffer.view(), std::chrono::milliseconds(2000));
@@ -235,89 +266,40 @@ void MultiClientNotificationTest::runNotificationTest(bool useProxies) {
     logger_->log("Client 1: sent '%s', received '%s'", message1.c_str(), response1.c_str());
     logger_->log("Client 2: sent '%s', received '%s'", message2.c_str(), response2.c_str());
     logger_->log("Client 3: sent '%s', received '%s'", message3.c_str(), response3.c_str());
-    
-    // Clean up connections
-    client1->disconnect();
-    client2->disconnect();
-    client3->disconnect();
 }
 
 void MultiClientNotificationTest::runCrossClientNotificationTest(bool useProxies) {
     logger_->log("Starting cross-client notification test (useProxies=%s)", useProxies ? "true" : "false");
     
-    std::vector<uint16_t> client_target_ports;
+    std::vector<uint16_t> client_target_ports = useProxies 
+        ? setupProxyChain(true)  // Use notification handler
+        : setupDirectConnection(true);
     
-    if (useProxies) {
-        // Proxy architecture: 3 server proxies -> 1 client proxy -> 1 TCP server with NotificationHandler
-        logger_->log("Using proxy chain: clients -> server_proxies -> %u -> %u", 
-                    TCP_CLIENT_PROXY_PORT, TCP_SERVER_PORT);
-        
-        // Create one TCP server with NotificationHandler for proxy scenario
-        notification_handler_ = std::make_unique<NotificationHandler>(*logger_);
-        notification_server_ = tcp::start_tcp_server(
-            *logger_,
-            Endpoint::loop_back(TCP_SERVER_PORT),
-            *notification_handler_);
-        
-        // Create one client proxy that connects to the shared TCP server
-        clientProxy_ = client_proxy::start_tcp_client_proxy(
-            *logger_,
-            Endpoint::loop_back(TCP_CLIENT_PROXY_PORT),
-            Endpoint::loop_back(TCP_SERVER_PORT));
-        
-        // Create separate server proxies for each client
-        serverProxy1_ = server_proxy::start_tcp_server_proxy(
-            *logger_,
-            Endpoint::loop_back(TCP_SERVER_PROXY1_PORT),
-            Endpoint::loop_back(TCP_CLIENT_PROXY_PORT));
-            
-        serverProxy2_ = server_proxy::start_tcp_server_proxy(
-            *logger_,
-            Endpoint::loop_back(TCP_SERVER_PROXY2_PORT),
-            Endpoint::loop_back(TCP_CLIENT_PROXY_PORT));
-            
-        serverProxy3_ = server_proxy::start_tcp_server_proxy(
-            *logger_,
-            Endpoint::loop_back(TCP_SERVER_PROXY3_PORT),
-            Endpoint::loop_back(TCP_CLIENT_PROXY_PORT));
-        
-        // Clients connect to different server proxy ports
-        client_target_ports = {TCP_SERVER_PROXY1_PORT, TCP_SERVER_PROXY2_PORT, TCP_SERVER_PROXY3_PORT};
-    } else {
-        // Direct architecture: use one TCP server with NotificationHandler
-        logger_->log("Using direct connection: clients -> %u", TCP_SERVER_PORT);
-        
-        notification_handler_ = std::make_unique<NotificationHandler>(*logger_);
-        notification_server_ = tcp::start_tcp_server(
-            *logger_,
-            Endpoint::loop_back(TCP_SERVER_PORT),
-            *notification_handler_);
-        
-        // All clients connect to the same server for direct connection test
-        client_target_ports = {TCP_SERVER_PORT, TCP_SERVER_PORT, TCP_SERVER_PORT};
-    }
-    
-    // Give time for servers to start
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
     
-    // Create 3 TCP clients
-    auto client1 = tcp::create_tcp_client(*logger_);
-    auto client2 = tcp::create_tcp_client(*logger_);
-    auto client3 = tcp::create_tcp_client(*logger_);
-    
-    // Connect each client to its dedicated server/proxy
-    auto session1 = client1->connect(Endpoint::loop_back(TCP_CLIENT1_PORT), Endpoint::loop_back(client_target_ports[0]));
-    auto session2 = client2->connect(Endpoint::loop_back(TCP_CLIENT2_PORT), Endpoint::loop_back(client_target_ports[1]));
-    auto session3 = client3->connect(Endpoint::loop_back(TCP_CLIENT3_PORT), Endpoint::loop_back(client_target_ports[2]));
-    
-    ASSERT_TRUE(session1);
-    ASSERT_TRUE(session2);
-    ASSERT_TRUE(session3);
+    auto [session1, session2, session3] = createAndConnectClients(client_target_ports);
     
     // Give time for all clients to connect and be registered by NotificationHandler
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
     
-    // Each client sends a message with their index
+    // Send two rounds of messages
+    sendMessageRounds(session1, session2, session3);
+    
+    // Read and verify all messages
+    auto [client1_combined, client2_combined, client3_combined] = readAllMessages(session1, session2, session3);
+    
+    // Verify cross-client notifications for round 2 messages
+    verifyNotifications(client1_combined, client2_combined, client3_combined);
+    
+    logger_->log("Cross-client notification test completed successfully (useProxies=%s)", useProxies ? "true" : "false");
+}
+
+void MultiClientNotificationTest::sendMessageRounds(
+    std::shared_ptr<tcp::ITcpSession> session1,
+    std::shared_ptr<tcp::ITcpSession> session2,
+    std::shared_ptr<tcp::ITcpSession> session3) {
+    
+    // First round messages
     std::string message1 = "message from client 1";
     std::string message2 = "message from client 2";
     std::string message3 = "message from client 3";
@@ -329,10 +311,9 @@ void MultiClientNotificationTest::runCrossClientNotificationTest(bool useProxies
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
     session3->write(ConstBuffer(message3.data(), message3.size()), std::chrono::milliseconds(1000));
     
-    // Give time for messages to propagate and all TCP connections to be established
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     
-    // Send a second round of messages now that all clients are connected to the server
+    // Second round messages
     std::string message1_round2 = "second message from client 1";
     std::string message2_round2 = "second message from client 2";
     std::string message3_round2 = "second message from client 3";
@@ -344,22 +325,21 @@ void MultiClientNotificationTest::runCrossClientNotificationTest(bool useProxies
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
     session3->write(ConstBuffer(message3_round2.data(), message3_round2.size()), std::chrono::milliseconds(1000));
     
-    // Give time for second round messages to propagate
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-    
-    // Each client should receive from both rounds:
-    // Round 1: Variable notifications (timing dependent in proxy mode)
-    // Round 2: Full notifications (all clients connected)
-    // Total: Multiple messages per client
+}
+
+std::tuple<std::string, std::string, std::string> MultiClientNotificationTest::readAllMessages(
+    std::shared_ptr<tcp::ITcpSession> session1,
+    std::shared_ptr<tcp::ITcpSession> session2,
+    std::shared_ptr<tcp::ITcpSession> session3) {
     
     OwnedBuffer buffer(1024);
     std::vector<std::string> client1_messages, client2_messages, client3_messages;
     
-    // Read all messages from both rounds (more attempts to catch all messages)
+    // Read all messages from both rounds
     for (int attempt = 0; attempt < 60; ++attempt) {
         bool received_any = false;
         
-        // Try reading from each client
         auto result1 = session1->read(buffer.view(), std::chrono::milliseconds(50));
         if (result1.code == IOResultCode::Success && result1.count > 0) {
             client1_messages.emplace_back(buffer.view().data, result1.count);
@@ -378,14 +358,31 @@ void MultiClientNotificationTest::runCrossClientNotificationTest(bool useProxies
             received_any = true;
         }
         
-        // If no messages received in this round, we might be done
-        if (!received_any) {
-            // Give a few more attempts in case messages are still coming
-            if (attempt > 45) break;
-        }
+        if (!received_any && attempt > 45) break;
     }
     
-    // Log what each client received
+    // Log received messages
+    logReceivedMessages(client1_messages, client2_messages, client3_messages);
+    
+    // Verify minimum message count
+    EXPECT_GE(client1_messages.size(), 1);
+    EXPECT_GE(client2_messages.size(), 1);
+    EXPECT_GE(client3_messages.size(), 1);
+    
+    // Combine messages
+    std::string client1_combined, client2_combined, client3_combined;
+    for (const auto& msg : client1_messages) client1_combined += msg;
+    for (const auto& msg : client2_messages) client2_combined += msg;
+    for (const auto& msg : client3_messages) client3_combined += msg;
+    
+    return {client1_combined, client2_combined, client3_combined};
+}
+
+void MultiClientNotificationTest::logReceivedMessages(
+    const std::vector<std::string>& client1_messages,
+    const std::vector<std::string>& client2_messages,
+    const std::vector<std::string>& client3_messages) {
+    
     logger_->log("Client 1 received %zu messages", client1_messages.size());
     for (const auto& msg : client1_messages) {
         logger_->log("  Client 1: '%s'", msg.c_str());
@@ -400,17 +397,17 @@ void MultiClientNotificationTest::runCrossClientNotificationTest(bool useProxies
     for (const auto& msg : client3_messages) {
         logger_->log("  Client 3: '%s'", msg.c_str());
     }
+}
+
+void MultiClientNotificationTest::verifyNotifications(
+    const std::string& client1_combined,
+    const std::string& client2_combined,
+    const std::string& client3_combined) {
     
-    // Verify each client received at least one message
-    ASSERT_GE(client1_messages.size(), 1);
-    ASSERT_GE(client2_messages.size(), 1);
-    ASSERT_GE(client3_messages.size(), 1);
-    
-    // Combine all messages for each client to handle TCP message concatenation
-    std::string client1_combined, client2_combined, client3_combined;
-    for (const auto& msg : client1_messages) client1_combined += msg;
-    for (const auto& msg : client2_messages) client2_combined += msg;
-    for (const auto& msg : client3_messages) client3_combined += msg;
+    // Second round message strings
+    std::string message1_round2 = "second message from client 1";
+    std::string message2_round2 = "second message from client 2";
+    std::string message3_round2 = "second message from client 3";
     
     // Verify round 2 messages (full cross-client notifications)
     // Round 1 is skipped as behavior is timing-dependent in proxy mode
@@ -419,27 +416,15 @@ void MultiClientNotificationTest::runCrossClientNotificationTest(bool useProxies
     ASSERT_TRUE(client2_combined.find("echo " + message2_round2) != std::string::npos);
     ASSERT_TRUE(client3_combined.find("echo " + message3_round2) != std::string::npos);
     
-    // In round 2, all clients should receive notifications from the other clients
-    // (This should work regardless of proxy vs direct connection since all are connected)
-    
-    // Client 1 should receive notifications from round 2 messages of clients 2 and 3
+    // Verify cross-client notifications for round 2
     ASSERT_TRUE(client1_combined.find("notify " + message2_round2) != std::string::npos);
     ASSERT_TRUE(client1_combined.find("notify " + message3_round2) != std::string::npos);
     
-    // Client 2 should receive notifications from round 2 messages of clients 1 and 3
     ASSERT_TRUE(client2_combined.find("notify " + message1_round2) != std::string::npos);
     ASSERT_TRUE(client2_combined.find("notify " + message3_round2) != std::string::npos);
     
-    // Client 3 should receive notifications from round 2 messages of clients 1 and 2
     ASSERT_TRUE(client3_combined.find("notify " + message1_round2) != std::string::npos);
     ASSERT_TRUE(client3_combined.find("notify " + message2_round2) != std::string::npos);
-    
-    logger_->log("Cross-client notification test completed successfully (useProxies=%s)", useProxies ? "true" : "false");
-    
-    // Clean up connections
-    client1->disconnect();
-    client2->disconnect();
-    client3->disconnect();
 }
 
 // Test with direct connection (no proxies)
