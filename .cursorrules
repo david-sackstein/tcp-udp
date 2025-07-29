@@ -1,0 +1,14 @@
+# C++ Coding Standards
+
+## Class Design
+1. Every class that is not inherited today - make final.
+2. All headers that are redundant remove.
+3. All methods that can be static make static.
+4. All methods that cannot be made static but can be made const, make const.
+
+## Code Quality
+- Follow modern C++ best practices
+- Use RAII principles
+- Prefer smart pointers over raw pointers
+- Use const correctness where possible
+- Minimize header dependencies 
