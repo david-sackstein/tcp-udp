@@ -3,7 +3,6 @@
 #include <background/BackgroundRunner.h>
 #include <libtcp/Exports.h>
 #include <libtcpserverproxy/Exports.h>
-#include <libtcpclientproxy/Exports.h>
 
 #include <gtest/gtest.h>
 #include <array>

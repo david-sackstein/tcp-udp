@@ -32,6 +32,9 @@ INCLUDES := \
 ACE_LIB := ACE
 GTEST_LIBS := -lgtest -lgtest_main -lpthread
 
+# Google Test options
+GTEST_OPTS := --gtest_brief=1
+
 # ================================
 # Phony Targets
 .PHONY: all clean tests proxytest tcptest udptest notificationtest bin build
@@ -161,27 +164,27 @@ $(OBJ_DIR)/%.o: src/%.cpp | $(OBJ_DIR)
 # Run tests
 
 tests: $(TESTS)
-	./$(TESTS)
+	./$(TESTS) $(GTEST_OPTS)
 
 # Run only the proxy chain test
 proxytest: $(TESTS)
-	GTEST_FILTER=ProxyChainTest.* ./$(TESTS)
+	GTEST_FILTER=ProxyChainTest.* ./$(TESTS) $(GTEST_OPTS)
 
 # Run only the TCP client/server test
 tcptest: $(TESTS)
-	GTEST_FILTER=TcpClientServerTest.* ./$(TESTS)
+	GTEST_FILTER=TcpClientServerTest.* ./$(TESTS) $(GTEST_OPTS)
 
 # Run only the UDP client/server test
 udptest: $(TESTS)
-	GTEST_FILTER=UdpClientServerTest.* ./$(TESTS)
+	GTEST_FILTER=UdpClientServerTest.* ./$(TESTS) $(GTEST_OPTS)
 
 # Run only the multi-client notification test
 notificationtest: $(TESTS)
-	GTEST_FILTER=MultiClientNotificationTest.* ./$(TESTS)
+	GTEST_FILTER=MultiClientNotificationTest.* ./$(TESTS) $(GTEST_OPTS)
 
 # Run only the large message test
 largemessagetest: $(TESTS)
-	GTEST_FILTER=LargeMessageTest.* ./$(TESTS)
+	GTEST_FILTER=LargeMessageTest.* ./$(TESTS) $(GTEST_OPTS)
 
 killall:
 	sudo lsof -i :15001 -i :15002 -i :15003 -sTCP:LISTEN -t | xargs -r sudo kill -9
