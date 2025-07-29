@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ClientKeyManager.h"
-#include "TcpSessionManager.h"
+#include "SessionManager.h"
 #include "UdpForwarder.h"
 #include <common/Endpoint.h>
 #include <liblogger/ILogger.h>
@@ -11,23 +11,23 @@
 #include <memory>
 
 // Forward declaration
-class TcpServerProxyUdpHandler;
+class ServerProxyUdpHandler;
 
-class TcpServerProxyClientHandler final : public tcp::ITcpClientHandler {
+class ServerProxyClientHandler final : public tcp::ITcpClientHandler {
 public:
-    TcpServerProxyClientHandler(
+    ServerProxyClientHandler(
         logger::ILogger& logger,
         Endpoint udp_proxy,
         udp::IUdpClient &udp_client,
-        TcpServerProxyUdpHandler* udp_handler
+        ServerProxyUdpHandler* udp_handler
     );
 
     std::unique_ptr<ITask> handle_client(std::unique_ptr<tcp::ITcpSession> client_session) override;
 
 private:
     logger::ILogger& logger_;
-    TcpServerProxyUdpHandler* udp_handler_;
-    std::unique_ptr<TcpSessionManager> session_manager_;
+    ServerProxyUdpHandler* udp_handler_;
+    std::unique_ptr<SessionManager> session_manager_;
     std::unique_ptr<UdpForwarder> udp_forwarder_;
     std::unique_ptr<ClientKeyManager> client_key_manager_;
 }; 

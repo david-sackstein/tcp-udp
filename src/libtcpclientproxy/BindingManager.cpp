@@ -1,14 +1,14 @@
-#include "TcpBindingManager.h"
+#include "BindingManager.h"
 #include "BindingFactory.h"
 
-TcpBindingManager::TcpBindingManager(logger::ILogger& logger)
+BindingManager::BindingManager(logger::ILogger& logger)
     : logger_(logger) {}
 
-void TcpBindingManager::setBindingFactory(std::unique_ptr<BindingFactory> factory) {
+void BindingManager::setBindingFactory(std::unique_ptr<BindingFactory> factory) {
     factory_ = std::move(factory);
 }
 
-TcpBindingManager::BindingPtr& TcpBindingManager::getOrCreateBinding(
+BindingManager::BindingPtr& BindingManager::getOrCreateBinding(
     const std::string& source_key, 
     udp::IUdpSession& udp_session, 
     const Endpoint& udp_sender) {
@@ -31,10 +31,10 @@ TcpBindingManager::BindingPtr& TcpBindingManager::getOrCreateBinding(
     return new_it->second;
 }
 
-void TcpBindingManager::removeBinding(const std::string& source_key) {
+void BindingManager::removeBinding(const std::string& source_key) {
     bindings_.erase(source_key);
 }
 
-bool TcpBindingManager::hasBinding(const std::string& source_key) const {
+bool BindingManager::hasBinding(const std::string& source_key) const {
     return bindings_.find(source_key) != bindings_.end();
 } 

@@ -18,10 +18,10 @@ TcpServerProxy::TcpServerProxy(logger::ILogger &logger, Endpoint local_endpoint,
     udp_client_ = udp::create_udp_client(logger_, Endpoint::any_loop_back());
     
     // Create UDP handler for receiving responses from client proxy
-    udp_handler_ = std::make_unique<TcpServerProxyUdpHandler>(logger_);
+    udp_handler_ = std::make_unique<ServerProxyUdpHandler>(logger_);
     
     // Create TCP handler for accepting client connections
-    tcp_handler_ = std::make_unique<TcpServerProxyClientHandler>(
+    tcp_handler_ = std::make_unique<ServerProxyClientHandler>(
         logger_,
         udp_proxy_,
         *udp_client_,

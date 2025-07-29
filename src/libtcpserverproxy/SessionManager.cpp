@@ -1,13 +1,13 @@
-#include "TcpSessionManager.h"
+#include "SessionManager.h"
 
 #include <common/task/RunningTask.h>
 
 #include <stdexcept>
 
-TcpSessionManager::TcpSessionManager(logger::ILogger& logger)
+SessionManager::SessionManager(logger::ILogger& logger)
     : logger_(logger) {}
 
-std::unique_ptr<ITask> TcpSessionManager::createSessionTask(
+std::unique_ptr<ITask> SessionManager::createSessionTask(
     std::shared_ptr<tcp::ITcpSession> client_session,
     const std::string& client_key,
     std::function<void(tcp::ITcpSession&, const std::string&, std::atomic<bool>&)> session_handler,
@@ -17,10 +17,10 @@ std::unique_ptr<ITask> TcpSessionManager::createSessionTask(
         try {
             session_handler(*client_session, client_key, cancelled);
         } catch (std::runtime_error& e) {
-            logger_.log(logger::LogLevel::ERROR, "TcpSessionManager: Exception for client %s: %s", client_key.c_str(), e.what());
+            logger_.log(logger::LogLevel::ERROR, "SessionManager: Exception for client %s: %s", client_key.c_str(), e.what());
         }
         
         cleanup_handler(client_key);
-        logger_.log(logger::LogLevel::INFO, "TcpSessionManager: Cleaned up client %s", client_key.c_str());
+        logger_.log(logger::LogLevel::INFO, "SessionManager: Cleaned up client %s", client_key.c_str());
     });
 } 

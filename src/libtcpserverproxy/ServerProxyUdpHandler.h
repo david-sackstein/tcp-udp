@@ -10,9 +10,9 @@
 // Forward declarations
 namespace tcp { class ITcpSession; }
 
-class TcpServerProxyUdpHandler final {
+class ServerProxyUdpHandler final {
 public:
-    explicit TcpServerProxyUdpHandler(logger::ILogger& logger);
+    explicit ServerProxyUdpHandler(logger::ILogger& logger);
 
     // Handle UDP input from client proxy responses
     int handle_udp_input(udp::IUdpClient& udp_client);

@@ -7,9 +7,9 @@
 #include <functional>
 #include <memory>
 
-class TcpSessionManager final {
+class SessionManager final {
 public:
-    explicit TcpSessionManager(logger::ILogger& logger);
+    explicit SessionManager(logger::ILogger& logger);
     
     std::unique_ptr<ITask> createSessionTask(
         std::shared_ptr<tcp::ITcpSession> client_session,

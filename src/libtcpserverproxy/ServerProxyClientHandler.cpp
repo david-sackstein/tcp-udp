@@ -1,24 +1,24 @@
 #include "ClientKeyManager.h"
-#include "TcpServerProxyClientHandler.h"
-#include "TcpServerProxyUdpHandler.h"
-#include "TcpSessionManager.h"
+#include "ServerProxyClientHandler.h"
+#include "ServerProxyUdpHandler.h"
+#include "SessionManager.h"
 #include "UdpForwarder.h"
 
 #include <common/Endpoint.h>
 #include <libudp/client/IUdpClient.h>
 
-TcpServerProxyClientHandler::TcpServerProxyClientHandler(
+ServerProxyClientHandler::ServerProxyClientHandler(
     logger::ILogger& logger,
     Endpoint udp_proxy,
     udp::IUdpClient &udp_client,
-    TcpServerProxyUdpHandler* udp_handler)
+    ServerProxyUdpHandler* udp_handler)
     : logger_(logger),
       udp_handler_(udp_handler),
-      session_manager_(std::make_unique<TcpSessionManager>(logger)),
+      session_manager_(std::make_unique<SessionManager>(logger)),
       udp_forwarder_(std::make_unique<UdpForwarder>(logger, std::move(udp_proxy), udp_client)),
       client_key_manager_(std::make_unique<ClientKeyManager>(logger)) {}
 
-std::unique_ptr<ITask> TcpServerProxyClientHandler::handle_client(std::unique_ptr<tcp::ITcpSession> client_session) {
+std::unique_ptr<ITask> ServerProxyClientHandler::handle_client(std::unique_ptr<tcp::ITcpSession> client_session) {
     std::string client_key = client_key_manager_->generateClientKey(*client_session);
     client_key_manager_->logClientConnection(client_key);
 

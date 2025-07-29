@@ -1,7 +1,7 @@
 #pragma once
 
 #include "BindingFactory.h"
-#include "TcpBindingManager.h"
+#include "BindingManager.h"
 #include "UdpSessionHandler.h"
 
 #include <common/Endpoint.h>
@@ -10,9 +10,9 @@
 
 #include <memory>
 
-class TcpClientProxyUdpHandler final : public udp::IUdpClientHandler {
+class ClientProxyUdpHandler final : public udp::IUdpClientHandler {
 public:
-    TcpClientProxyUdpHandler(logger::ILogger& logger, Endpoint local_endpoint, Endpoint tcp_server, std::shared_ptr<ACE_Reactor> reactor);
+    ClientProxyUdpHandler(logger::ILogger& logger, Endpoint local_endpoint, Endpoint tcp_server, std::shared_ptr<ACE_Reactor> reactor);
 
     std::unique_ptr<ITask> handle_client(udp::IUdpSession& client_session) override;
 
@@ -22,5 +22,5 @@ private:
     logger::ILogger& logger_;
     const Endpoint local_endpoint_;
     std::unique_ptr<UdpSessionHandler> udp_session_handler_;
-    std::unique_ptr<TcpBindingManager> binding_manager_;
+    std::unique_ptr<BindingManager> binding_manager_;
 }; 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "TcpClientProxyUdpHandler.h"
+#include "ClientProxyUdpHandler.h"
 
 #include <libudp/InternalExports.h>
 
@@ -22,6 +22,6 @@ private:
 
     std::shared_ptr<ACE_Reactor> reactor_;
     std::unique_ptr<IBlockingServer> udp_server_;
-    std::unique_ptr<TcpClientProxyUdpHandler> udp_handler_;
+    std::unique_ptr<ClientProxyUdpHandler> udp_handler_;
     logger::ILogger& logger_;
 }; 

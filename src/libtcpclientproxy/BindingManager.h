@@ -9,9 +9,9 @@
 #include <memory>
 #include <unordered_map>
 
-class TcpBindingManager final {
+class BindingManager final {
 public:
-    explicit TcpBindingManager(logger::ILogger& logger);
+    explicit BindingManager(logger::ILogger& logger);
     
     using BindingPtr = std::unique_ptr<UdpTcpBinding>;
     using BindingMap = std::unordered_map<std::string, BindingPtr>;
