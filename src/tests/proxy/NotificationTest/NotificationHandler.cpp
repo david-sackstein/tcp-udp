@@ -43,13 +43,13 @@ std::unique_ptr<ITask> NotificationHandler::handle_client(std::unique_ptr<tcp::I
             logger_.log("NotificationHandler: Received message: '%s'", received_message.c_str());
             
             // Send echo response to the sender
-            std::string echo_response = "echo " + received_message + "\n";
+            std::string echo_response = "echo [" + received_message + "]";
             ConstBuffer echo_buffer(echo_response.data(), echo_response.size());
             auto echo_result = shared_session->write(echo_buffer, std::chrono::milliseconds(100));
             logger_.log("NotificationHandler: Sent echo response to sender");
-            
+
             // Send notification to all OTHER clients
-            std::string notification = "notify " + received_message + "\n";
+            std::string notification = "notify [" + received_message + "]";
             ConstBuffer notify_buffer(notification.data(), notification.size());
             
             std::lock_guard<std::mutex> lock(sessions_mutex_);
