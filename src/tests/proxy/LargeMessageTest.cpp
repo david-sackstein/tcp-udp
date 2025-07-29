@@ -1,4 +1,5 @@
 #include "LargeMessageTest.h"
+#include "SimpleEchoHandler.h"
 
 #include <libtcp/Exports.h>
 #include <libtcpclientproxy/Exports.h>
@@ -15,63 +16,6 @@
 #include <sstream>
 #include <iomanip>
 #include <algorithm>
-#include <common/task/RunningTask.h>
-
-// Simple echo handler that echoes back the exact message without any prefix
-class SimpleEchoHandler : public tcp::ITcpClientHandler {
-public:
-    explicit SimpleEchoHandler(logger::ILogger& logger) : logger_(logger) {}
-
-    std::unique_ptr<ITask> handle_client(std::unique_ptr<tcp::ITcpSession> client_session) override {
-        std::shared_ptr shared_session = std::move(client_session);
-        // Capture shared_ptr to this to ensure the handler stays alive
-        std::shared_ptr<SimpleEchoHandler> shared_this = std::make_shared<SimpleEchoHandler>(*this);
-
-        return std::make_unique<RunningTask>([shared_session, shared_this](std::atomic<bool>& cancelled) {
-            OwnedBuffer buffer_in(1024);
-
-            while (!cancelled) {
-                auto read_result = shared_session->read(buffer_in.view(), std::chrono::milliseconds(100));
-                
-                if (read_result.code == IOResultCode::Error) {
-                    shared_this->logger_.log("SimpleEchoHandler: failed to read: %s", read_result.error_message.c_str());
-                    break;
-                }
-
-                if (read_result.code == IOResultCode::ConnectionClosed) {
-                    shared_this->logger_.log("SimpleEchoHandler: read ConnectionClosed");
-                    break;
-                }
-
-                if (read_result.code == IOResultCode::Timeout) {
-                    continue; // Retry read
-                }
-
-                // Echo back the exact message without any prefix
-                ConstBuffer buffer_out(buffer_in.view().data, read_result.count);
-
-                auto write_result = shared_session->write(buffer_out, std::chrono::milliseconds(100));
-                
-                if (write_result.code == IOResultCode::Error) {
-                    shared_this->logger_.log("SimpleEchoHandler: failed to write: %s", write_result.error_message.c_str());
-                    break;
-                }
-
-                if (write_result.code == IOResultCode::ConnectionClosed) {
-                    shared_this->logger_.log("SimpleEchoHandler: write ConnectionClosed");
-                    break;
-                }
-
-                if (write_result.code == IOResultCode::Timeout) {
-                    break;
-                }
-            }
-        });
-    }
-
-private:
-    logger::ILogger& logger_;
-};
 
 // Test with direct connection (no proxies) - small message
 TEST_F(LargeMessageTest, DirectConnection_SmallMessage) {
@@ -194,7 +138,7 @@ std::shared_ptr<tcp::ITcpSession> LargeMessageTest::createAndConnectClient(uint1
     return session;
 }
 
-std::string LargeMessageTest::generateLargeMessage(size_t size) {
+std::string LargeMessageTest::generateLargeMessage(size_t size) const {
     std::ostringstream oss;
     
     // Create a repeating pattern with sequence numbers for verification
