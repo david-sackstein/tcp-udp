@@ -34,7 +34,7 @@ GTEST_LIBS := -lgtest -lgtest_main -lpthread
 
 # ================================
 # Phony Targets
-.PHONY: all clean tests proxytest tcptest udptest bin build
+.PHONY: all clean tests proxytest tcptest udptest notificationtest bin build
 
 # ================================
 # Directory Creation
@@ -174,6 +174,10 @@ tcptest: $(TESTS)
 # Run only the UDP client/server test
 udptest: $(TESTS)
 	GTEST_FILTER=UdpClientServerTest.* ./$(TESTS)
+
+# Run only the multi-client notification test
+notificationtest: $(TESTS)
+	GTEST_FILTER=MultiClientNotificationTest.* ./$(TESTS)
 
 killall:
 	sudo lsof -i :15001 -i :15002 -i :15003 -sTCP:LISTEN -t | xargs -r sudo kill -9
