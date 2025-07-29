@@ -1,5 +1,7 @@
-#include "UserInputHandler.h"
 #include "EndpointValidator.h"
+#include "UserInputHandler.h"
+
+#include <common/Constants.h>
 
 #include <iostream>
 #include <limits>
@@ -56,7 +58,7 @@ int UserInputHandler::select_port() {
             break;
         }
         
-        std::cout << "Invalid port. Please enter a number between 0 and 65535.\n";
+        std::cout << "Invalid port. Please enter a number between 0 and " << common::MAX_PORT << ".\n";
     }
     return port;
 }

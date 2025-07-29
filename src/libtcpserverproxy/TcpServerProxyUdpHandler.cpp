@@ -1,12 +1,13 @@
 #include "TcpServerProxyUdpHandler.h"
 
-#include <libtcp/ITcpSession.h>
-#include <libacetools/IOResultCode.h>
+#include <common/Constants.h>
 #include <common/StringUtils.h>
+#include <libacetools/IOResultCode.h>
+#include <libtcp/ITcpSession.h>
 
 #include <stdexcept>
 
-std::chrono::milliseconds write_timeout = std::chrono::milliseconds(1000);
+std::chrono::milliseconds write_timeout = common::STANDARD_TIMEOUT;
 
 TcpServerProxyUdpHandler::TcpServerProxyUdpHandler(logger::ILogger& logger)
     : logger_(logger) {}

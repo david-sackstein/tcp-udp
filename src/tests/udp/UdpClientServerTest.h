@@ -15,6 +15,8 @@ protected:
     void TearDown() override;
 
 private:
+    static constexpr size_t BUFFER_SIZE = 1024;
+    
     std::unique_ptr<logger::ILogger> logger_;
     std::unique_ptr<udp::IUdpClientHandler> client_handler_;
     std::unique_ptr<IBackgroundServer> server_;

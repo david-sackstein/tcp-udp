@@ -1,5 +1,6 @@
 #include "TcpEchoHandler.h"
 
+#include <common/Constants.h>
 #include <common/OwnedBuffer.h>
 #include <common/task/RunningTask.h>
 
@@ -13,10 +14,10 @@ std::unique_ptr<ITask> TcpEchoHandler::handle_client(std::unique_ptr<tcp::ITcpSe
     std::shared_ptr shared_session = std::move(client_session);
 
     return std::make_unique<RunningTask>([shared_session, this](std::atomic<bool>& cancelled) {
-        OwnedBuffer buffer_in(1024);
+        OwnedBuffer buffer_in(common::STANDARD_BUFFER_SIZE);
 
         while (!cancelled) {
-            auto read_result = shared_session->read(buffer_in.view(), std::chrono::milliseconds(100));
+            auto read_result = shared_session->read(buffer_in.view(), common::SHORT_TIMEOUT);
             
             if (read_result.code == IOResultCode::Timeout) {
                 continue; // Retry read
@@ -30,7 +31,7 @@ std::unique_ptr<ITask> TcpEchoHandler::handle_client(std::unique_ptr<tcp::ITcpSe
             std::string echo_response = processEchoMessage(received_message);
             ConstBuffer buffer_out(echo_response.data(), echo_response.size());
 
-            auto write_result = shared_session->write(buffer_out, std::chrono::milliseconds(100));
+            auto write_result = shared_session->write(buffer_out, common::SHORT_TIMEOUT);
             
             if (!handleWriteResult(write_result)) {
                 break;

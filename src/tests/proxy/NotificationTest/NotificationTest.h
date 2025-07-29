@@ -66,14 +66,27 @@ private:
         const std::string& client3_combined);
 
     // Port constants
-    const uint16_t TCP_CLIENT1_PORT = 16000;
-    const uint16_t TCP_CLIENT2_PORT = 16001;
-    const uint16_t TCP_CLIENT3_PORT = 16002;
-    const uint16_t TCP_CLIENT_PROXY_PORT = 17002;
-    const uint16_t TCP_SERVER_PORT = 17003;
-    const uint16_t TCP_SERVER_PROXY1_PORT = 17001;
-    const uint16_t TCP_SERVER_PROXY2_PORT = 17004;
-    const uint16_t TCP_SERVER_PROXY3_PORT = 17005;
+    static constexpr uint16_t TCP_CLIENT1_PORT = 16000;
+    static constexpr uint16_t TCP_CLIENT2_PORT = 16001;
+    static constexpr uint16_t TCP_CLIENT3_PORT = 16002;
+    static constexpr uint16_t TCP_CLIENT_PROXY_PORT = 17002;
+    static constexpr uint16_t TCP_SERVER_PORT = 17003;
+    static constexpr uint16_t TCP_SERVER_PROXY1_PORT = 17001;
+    static constexpr uint16_t TCP_SERVER_PROXY2_PORT = 17004;
+    static constexpr uint16_t TCP_SERVER_PROXY3_PORT = 17005;
+    
+    // Test constants
+    static constexpr size_t BUFFER_SIZE = 1024;
+    static constexpr std::chrono::milliseconds WRITE_TIMEOUT{1000};
+    static constexpr std::chrono::milliseconds READ_TIMEOUT{2000};
+    static constexpr std::chrono::milliseconds SHORT_READ_TIMEOUT{50};
+    static constexpr std::chrono::milliseconds TEARDOWN_SLEEP{100};
+    static constexpr std::chrono::milliseconds SEQUENTIAL_SLEEP{100};
+    static constexpr std::chrono::milliseconds CONNECTION_SLEEP{200};
+    static constexpr std::chrono::milliseconds STABILIZATION_SLEEP{300};
+    static constexpr std::chrono::milliseconds NOTIFICATION_SLEEP{500};
+    static constexpr int MAX_READ_ATTEMPTS = 60;
+    static constexpr int READ_BREAK_THRESHOLD = 45;
     
     // Member variables
     std::unique_ptr<logger::ILogger> logger_;

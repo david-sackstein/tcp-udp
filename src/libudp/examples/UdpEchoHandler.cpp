@@ -1,7 +1,8 @@
 #include "UdpEchoHandler.h"
 
-#include <libacetools/IOResult.h>
+#include <common/Constants.h>
 #include <common/OwnedBuffer.h>
+#include <libacetools/IOResult.h>
 
 #include "common/task/CompletedTask.h"
 
@@ -11,10 +12,10 @@ UdpEchoHandler::UdpEchoHandler(logger::ILogger& logger)
     : logger_(logger) {}
 
 std::unique_ptr<ITask> UdpEchoHandler::handle_client(udp::IUdpSession& client_session) {
-    OwnedBuffer buffer(1024);
+    OwnedBuffer buffer(common::STANDARD_BUFFER_SIZE);
     Endpoint sender;
 
-    IOResult result = client_session.read_from(buffer.view(), sender, std::chrono::milliseconds(1000));
+    IOResult result = client_session.read_from(buffer.view(), sender, common::STANDARD_TIMEOUT);
     
     if (result.code == IOResultCode::Error) {
         logger_.log(logger::LogLevel::ERROR, "UdpEchoHandler: failed to read: %s", result.error_message.c_str());
@@ -35,7 +36,7 @@ std::unique_ptr<ITask> UdpEchoHandler::handle_client(udp::IUdpSession& client_se
     std::string echo_msg = "echo " + received_msg;
     ConstBuffer response_buffer(echo_msg.data(), echo_msg.size());
     
-    IOResult write_result = client_session.write_to(response_buffer, sender, std::chrono::milliseconds(1000));
+    IOResult write_result = client_session.write_to(response_buffer, sender, common::STANDARD_TIMEOUT);
 
             logger_.log(logger::LogLevel::INFO, "UdpEchoHandler: %s received: '%s', echoing back: '%s' to %s",
         sender.to_string().c_str(),

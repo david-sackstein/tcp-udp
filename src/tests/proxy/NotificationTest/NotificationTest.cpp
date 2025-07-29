@@ -45,7 +45,7 @@ void MultiClientNotificationTest::SetUp() {
 void MultiClientNotificationTest::TearDown() {
     stopAllServers();
     logger_->log(logger::LogLevel::INFO, "TearDown: Allowing time for graceful cleanup...");
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::this_thread::sleep_for(TEARDOWN_SLEEP);
 }
 
 void MultiClientNotificationTest::stopAllServers() {
@@ -173,7 +173,7 @@ void MultiClientNotificationTest::runNotificationTest(bool useProxies) {
 
     logger_->log(logger::LogLevel::INFO, "Waiting for servers to initialize (necessary for proxy chain setup)...");
     logger_->log(logger::LogLevel::INFO, "SLEEPING for 200ms for server initialization");
-    std::this_thread::sleep_for(std::chrono::milliseconds(200)); // Reduced from 500ms
+    std::this_thread::sleep_for(CONNECTION_SLEEP);
 
     logger_->log(logger::LogLevel::INFO, "Creating and connecting clients...");
     auto [session1, session2, session3] = createAndConnectClients(client_target_ports);
@@ -186,9 +186,9 @@ void MultiClientNotificationTest::runNotificationTest(bool useProxies) {
 
     logger_->log(logger::LogLevel::INFO, "Sending messages...");
     // Send messages
-    auto write1 = session1->write(ConstBuffer(message1.data(), message1.size()), std::chrono::milliseconds(1000));
-    auto write2 = session2->write(ConstBuffer(message2.data(), message2.size()), std::chrono::milliseconds(1000));
-    auto write3 = session3->write(ConstBuffer(message3.data(), message3.size()), std::chrono::milliseconds(1000));
+    auto write1 = session1->write(ConstBuffer(message1.data(), message1.size()), WRITE_TIMEOUT);
+    auto write2 = session2->write(ConstBuffer(message2.data(), message2.size()), WRITE_TIMEOUT);
+    auto write3 = session3->write(ConstBuffer(message3.data(), message3.size()), WRITE_TIMEOUT);
 
     logger_->log(logger::LogLevel::INFO, "Write results: %d, %d, %d", (int) write1.code, (int) write2.code,
                  (int) write3.code);
@@ -198,19 +198,19 @@ void MultiClientNotificationTest::runNotificationTest(bool useProxies) {
     ASSERT_EQ(IOResultCode::Success, write3.code);
 
     // Read and verify echo responses
-    OwnedBuffer buffer(1024);
-
-    auto read1 = session1->read(buffer.view(), std::chrono::milliseconds(2000));
+        OwnedBuffer buffer(BUFFER_SIZE);
+    
+    auto read1 = session1->read(buffer.view(), READ_TIMEOUT);
     ASSERT_EQ(IOResultCode::Success, read1.code);
     std::string response1(buffer.view().data, read1.count);
     ASSERT_EQ("echo [" + message1 + "]", response1);
 
-    auto read2 = session2->read(buffer.view(), std::chrono::milliseconds(2000));
+        auto read2 = session2->read(buffer.view(), READ_TIMEOUT);
     ASSERT_EQ(IOResultCode::Success, read2.code);
     std::string response2(buffer.view().data, read2.count);
     ASSERT_EQ("echo [" + message2 + "]", response2);
-
-    auto read3 = session3->read(buffer.view(), std::chrono::milliseconds(2000));
+    
+    auto read3 = session3->read(buffer.view(), READ_TIMEOUT);
     ASSERT_EQ(IOResultCode::Success, read3.code);
     std::string response3(buffer.view().data, read3.count);
     ASSERT_EQ("echo [" + message3 + "]", response3);
@@ -227,15 +227,15 @@ std::vector<uint16_t> MultiClientNotificationTest::setupNotificationTest(bool us
                                                     ? setupProxyChain(true)
                                                     : setupDirectConnection(true);
 
-    logger_->log(logger::LogLevel::INFO,
+        logger_->log(logger::LogLevel::INFO,
                  "Waiting for server chain to stabilize (required for multi-proxy coordination)...");
     logger_->log(logger::LogLevel::INFO, "SLEEPING for 300ms for proxy chain stabilization");
-    std::this_thread::sleep_for(std::chrono::milliseconds(300));
-
+    std::this_thread::sleep_for(STABILIZATION_SLEEP);
+    
     logger_->log(logger::LogLevel::INFO,
                  "Allowing NotificationHandler to register all clients (ensures complete notifications)...");
     logger_->log(logger::LogLevel::INFO, "SLEEPING for 100ms for client registration");
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::this_thread::sleep_for(SEQUENTIAL_SLEEP);
 
     return client_target_ports;
 }
@@ -278,19 +278,19 @@ void MultiClientNotificationTest::sendMessageRounds(
     std::string message3 = "message from client 3";
 
     logger_->log(logger::LogLevel::INFO, "Sending first round of messages...");
-    session1->write(ConstBuffer(message1.data(), message1.size()), std::chrono::milliseconds(1000));
+    session1->write(ConstBuffer(message1.data(), message1.size()), WRITE_TIMEOUT);
 
     logger_->log(logger::LogLevel::INFO, "SLEEPING for 100ms for sequential processing");
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::this_thread::sleep_for(SEQUENTIAL_SLEEP);
 
-    session2->write(ConstBuffer(message2.data(), message2.size()), std::chrono::milliseconds(1000));
+    session2->write(ConstBuffer(message2.data(), message2.size()), WRITE_TIMEOUT);
 
     logger_->log(logger::LogLevel::INFO, "SLEEPING for 100ms for sequential processing");
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    session3->write(ConstBuffer(message3.data(), message3.size()), std::chrono::milliseconds(1000));
+    std::this_thread::sleep_for(SEQUENTIAL_SLEEP);
+    session3->write(ConstBuffer(message3.data(), message3.size()), WRITE_TIMEOUT);
 
     logger_->log(logger::LogLevel::INFO, "SLEEPING for 500ms for connection establishment");
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    std::this_thread::sleep_for(NOTIFICATION_SLEEP);
 
     // Second round messages
     std::string message1_round2 = "second message from client 1";
@@ -298,28 +298,28 @@ void MultiClientNotificationTest::sendMessageRounds(
     std::string message3_round2 = "second message from client 3";
 
     logger_->log(logger::LogLevel::INFO, "Sending second round of messages...");
-    session1->write(ConstBuffer(message1_round2.data(), message1_round2.size()), std::chrono::milliseconds(1000));
+    session1->write(ConstBuffer(message1_round2.data(), message1_round2.size()), WRITE_TIMEOUT);
 
     logger_->log(logger::LogLevel::INFO, "SLEEPING for 100ms for sequential processing");
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::this_thread::sleep_for(SEQUENTIAL_SLEEP);
 
-    session2->write(ConstBuffer(message2_round2.data(), message2_round2.size()), std::chrono::milliseconds(1000));
+    session2->write(ConstBuffer(message2_round2.data(), message2_round2.size()), WRITE_TIMEOUT);
 
     logger_->log(logger::LogLevel::INFO, "SLEEPING for 100ms for sequential processing");
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::this_thread::sleep_for(SEQUENTIAL_SLEEP);
 
-    session3->write(ConstBuffer(message3_round2.data(), message3_round2.size()), std::chrono::milliseconds(1000));
+    session3->write(ConstBuffer(message3_round2.data(), message3_round2.size()), WRITE_TIMEOUT);
 
     logger_->log(logger::LogLevel::INFO, "SLEEPING for 500ms for notification propagation");
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    std::this_thread::sleep_for(NOTIFICATION_SLEEP);
 }
 
 std::vector<std::string>
 MultiClientNotificationTest::readMessagesFromSession(std::shared_ptr<tcp::ITcpSession> session) {
-    OwnedBuffer buffer(1024);
+    OwnedBuffer buffer(BUFFER_SIZE);
     std::vector<std::string> messages;
 
-    auto result = session->read(buffer.view(), std::chrono::milliseconds(50));
+    auto result = session->read(buffer.view(), SHORT_READ_TIMEOUT);
     if (result.code == IOResultCode::Success && result.count > 0) {
         messages.emplace_back(buffer.view().data, result.count);
     }
@@ -332,13 +332,13 @@ MultiClientNotificationTest::processReceivedMessages(const std::shared_ptr<tcp::
     std::vector<std::string> messages;
 
     // Read all messages from both rounds
-    for (int attempt = 0; attempt < 60; ++attempt) {
+    for (int attempt = 0; attempt < MAX_READ_ATTEMPTS; ++attempt) {
         auto sessionMessages = readMessagesFromSession(session);
         if (!sessionMessages.empty()) {
             messages.insert(messages.end(), sessionMessages.begin(), sessionMessages.end());
         }
 
-        if (sessionMessages.empty() && attempt > 45) break;
+        if (sessionMessages.empty() && attempt > READ_BREAK_THRESHOLD) break;
     }
 
     return messages;
@@ -359,7 +359,7 @@ std::tuple<std::string, std::string, std::string> MultiClientNotificationTest::r
     std::vector<std::string> client1_messages, client2_messages, client3_messages;
 
     // Read all messages from both rounds
-    for (int attempt = 0; attempt < 60; ++attempt) {
+    for (int attempt = 0; attempt < MAX_READ_ATTEMPTS; ++attempt) {
         bool received_any = false;
 
         auto session1Messages = readMessagesFromSession(session1);
@@ -380,7 +380,7 @@ std::tuple<std::string, std::string, std::string> MultiClientNotificationTest::r
             received_any = true;
         }
 
-        if (!received_any && attempt > 45) break;
+        if (!received_any && attempt > READ_BREAK_THRESHOLD) break;
     }
 
     // Log received messages

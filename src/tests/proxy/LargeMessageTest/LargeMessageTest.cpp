@@ -19,27 +19,27 @@
 
 // Test with direct connection (no proxies) - small message
 TEST_F(LargeMessageTest, DirectConnection_SmallMessage) {
-    runLargeMessageTest(false, 1024);
+    runLargeMessageTest(false, SMALL_MESSAGE_SIZE);
 }
 
 // Test with direct connection (no proxies) - large message
 TEST_F(LargeMessageTest, DirectConnection_LargeMessage) {
-    runLargeMessageTest(false, 10240);
+    runLargeMessageTest(false, LARGE_MESSAGE_SIZE);
 }
 
 // Test with proxy chain - small message
 TEST_F(LargeMessageTest, ProxyChain_SmallMessage) {
-    runLargeMessageTest(true, 1024);
+    runLargeMessageTest(true, SMALL_MESSAGE_SIZE);
 }
 
 // Test with proxy chain - large message
 TEST_F(LargeMessageTest, ProxyChain_LargeMessage) {
-    runLargeMessageTest(true, 10240);
+    runLargeMessageTest(true, LARGE_MESSAGE_SIZE);
 }
 
 // Test with proxy chain - very large message (multiple UDP packets guaranteed)
 TEST_F(LargeMessageTest, ProxyChain_VeryLargeMessage) {
-    runLargeMessageTest(true, 50000);
+    runLargeMessageTest(true, VERY_LARGE_MESSAGE_SIZE);
 }
 
 void LargeMessageTest::SetUp() {
@@ -50,7 +50,7 @@ void LargeMessageTest::TearDown() {
     stopAllServers();
     logger_->log(logger::LogLevel::INFO, "TearDown: Allowing time for graceful cleanup...");
     logger_->log(logger::LogLevel::INFO, "SLEEPING for 100ms for graceful cleanup");
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::this_thread::sleep_for(TEARDOWN_SLEEP);
 }
 
 void LargeMessageTest::stopAllServers() {
@@ -101,7 +101,7 @@ std::vector<uint16_t> LargeMessageTest::setupProxyChain() {
     
     logger_->log(logger::LogLevel::INFO, "Waiting for proxy chain to initialize...");
     logger_->log(logger::LogLevel::INFO, "SLEEPING for 200ms for proxy chain initialization");
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    std::this_thread::sleep_for(CONNECTION_SLEEP);
     
     return {TCP_SERVER_PROXY_PORT};
 }
@@ -115,7 +115,7 @@ std::vector<uint16_t> LargeMessageTest::setupDirectConnection() {
     
     logger_->log(logger::LogLevel::INFO, "Waiting for server to initialize...");
     logger_->log(logger::LogLevel::INFO, "SLEEPING for 200ms for server initialization");
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    std::this_thread::sleep_for(CONNECTION_SLEEP);
     
     return {TCP_SERVER_PORT};
 }
@@ -197,7 +197,7 @@ std::vector<uint16_t> LargeMessageTest::setupTestInfrastructure(bool useProxies)
 void LargeMessageTest::sendLargeMessage(std::shared_ptr<tcp::ITcpSession> session, const std::string& message) {
     logger_->log(logger::LogLevel::INFO, "Sending message of %zu bytes...", message.length());
     ConstBuffer send_buffer(message.data(), message.length());
-    auto write_result = session->write(send_buffer, std::chrono::milliseconds(5000));
+    auto write_result = session->write(send_buffer, WRITE_TIMEOUT);
     EXPECT_EQ(write_result.code, IOResultCode::Success);
     EXPECT_EQ(write_result.count, message.length());
 }
@@ -227,7 +227,7 @@ std::string LargeMessageTest::handleMessageFragmentation(std::shared_ptr<tcp::IT
             std::min(remaining, receive_buffer.view().size - totalReceived)
         };
         
-        auto read_result = session->read(read_buffer, std::chrono::milliseconds(2000));
+        auto read_result = session->read(read_buffer, READ_TIMEOUT);
         
         if (read_result.code == IOResultCode::Timeout) {
             logger_->log(logger::LogLevel::ERROR, "Read timeout, received %zu/%zu bytes so far", totalReceived, expectedSize);

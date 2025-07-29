@@ -17,18 +17,11 @@ This document contains identified refactoring opportunities to improve code qual
 - Specialized logger wrappers for different contexts
 - `TestBase` class with common setup methods
 
-### 9. Additional Method Extractions
-**File**: `src/tests/proxy/NotificationTest/NotificationTest.cpp`
-**Method**: `runCrossClientNotificationTest()` (lines 200-220)
-**Issue**: Complex test setup and execution logic
-**Recommendation**: Extract into:
-- `setupNotificationTest()`
-- `executeNotificationRound()`
-- `verifyCrossClientNotifications()`
+
 
 ## Low Priority Refactoring
 
-### 10. Extract Test Infrastructure Classes
+### 9. Extract Test Infrastructure Classes
 **Files**: 
 - `src/tests/proxy/NotificationTest/NotificationTest.h`
 - `src/tests/proxy/LargeMessageTest/LargeMessageTest.h`

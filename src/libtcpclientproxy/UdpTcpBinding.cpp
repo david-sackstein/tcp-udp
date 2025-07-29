@@ -1,7 +1,8 @@
 #include "UdpTcpBinding.h"
 
-#include <libacetools/IOResultCode.h>
+#include <common/Constants.h>
 #include <libacetools/Exports.h>
+#include <libacetools/IOResultCode.h>
 
 static ISocketIO& io_ = get_socket_io();
 
@@ -14,7 +15,7 @@ int UdpTcpBinding::handle_input(ACE_HANDLE) {
     
     if (result.code == IOResultCode::Success && result.count > 0) {
         ConstBuffer tcp_data{buffer_.view().data, result.count};
-        udp_session_.write_to(tcp_data, udp_sender_, std::chrono::milliseconds(1000));
+        udp_session_.write_to(tcp_data, udp_sender_, common::STANDARD_TIMEOUT);
         return 0;
     }
     

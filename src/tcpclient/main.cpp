@@ -1,8 +1,10 @@
-#include <libtcp/Exports.h>
 #include <liblogger/Exports.h>
+#include <libtcp/Exports.h>
+
+#include <common/Constants.h>
+#include "common/OwnedBuffer.h"
 
 #include <iostream>
-#include "common/OwnedBuffer.h"
 
 static std::chrono::milliseconds block = std::chrono::milliseconds::max();
 
@@ -16,7 +18,7 @@ int main() {
         return 1;
     }
 
-    const Endpoint endpoint = Endpoint::loop_back(12345);
+    const Endpoint endpoint = Endpoint::loop_back(common::DEFAULT_TCP_PORT);
 
     auto session = client->connect(Endpoint::any_loop_back(), endpoint);
     if (!session) {
@@ -34,7 +36,7 @@ int main() {
         return 1;
     }
 
-    OwnedBuffer buffer_in(1024);
+    OwnedBuffer buffer_in(common::STANDARD_BUFFER_SIZE);
 
     const auto result = session->read(buffer_in.view(), block);
     if (result.code != IOResultCode::Success) {

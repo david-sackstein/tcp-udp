@@ -1,7 +1,9 @@
 #include "LocalAddresses.h"
 
-#include <ifaddrs.h>
+#include <common/Constants.h>
+
 #include <ace/INET_Addr.h>
+#include <ifaddrs.h>
 
 bool is_ipv4_addr(const ifaddrs* ifa);
 std::string sockaddr_to_string(const sockaddr *sa);
@@ -30,7 +32,7 @@ std::vector<std::string> get_local_ipv4_addresses() {
 
 std::string sockaddr_to_string(const sockaddr *sa) {
     ACE_INET_Addr addr{};
-    char buf[256] = {};
+    char buf[common::SMALL_BUFFER_SIZE] = {};
 
     bool set_ok = addr.set(reinterpret_cast<const sockaddr_in *>(sa), sizeof(struct sockaddr_in)) == 0;
     bool to_string_ok = addr.addr_to_string(buf, sizeof(buf), 1) == 0;

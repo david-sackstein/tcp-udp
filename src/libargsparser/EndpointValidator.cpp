@@ -1,12 +1,13 @@
 #include "EndpointValidator.h"
 
+#include <common/Constants.h>
 #include <common/Endpoint.h>
 
-#include <iostream>
 #include <algorithm>
+#include <iostream>
 
 bool EndpointValidator::is_valid_port(int port) {
-    return port >= 0 && port <= 65535;
+    return port >= 0 && port <= common::MAX_PORT;
 }
 
 bool EndpointValidator::is_valid_endpoint_format(const std::string& endpoint) {

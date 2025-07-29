@@ -22,6 +22,15 @@ protected:
     // Test implementations
     void runLargeMessageTest(bool useProxies, size_t messageSize);
     
+    // Test constants
+    static constexpr size_t SMALL_MESSAGE_SIZE = 1024;
+    static constexpr size_t LARGE_MESSAGE_SIZE = 10240;
+    static constexpr size_t VERY_LARGE_MESSAGE_SIZE = 50000;
+    static constexpr auto WRITE_TIMEOUT = std::chrono::milliseconds(5000);
+    static constexpr auto READ_TIMEOUT = std::chrono::milliseconds(2000);
+    static constexpr auto TEARDOWN_SLEEP = std::chrono::milliseconds(100);
+    static constexpr auto CONNECTION_SLEEP = std::chrono::milliseconds(200);
+    
 private:
     // Setup methods
     void stopAllServers();
@@ -40,10 +49,10 @@ private:
     std::string handleMessageFragmentation(std::shared_ptr<tcp::ITcpSession> session, size_t expectedSize);
     
     // Port constants
-    const uint16_t TCP_CLIENT_PORT = 18000;
-    const uint16_t TCP_CLIENT_PROXY_PORT = 18001;
-    const uint16_t TCP_SERVER_PORT = 18002;
-    const uint16_t TCP_SERVER_PROXY_PORT = 18003;
+    static constexpr uint16_t TCP_CLIENT_PORT = 18000;
+    static constexpr uint16_t TCP_CLIENT_PROXY_PORT = 18001;
+    static constexpr uint16_t TCP_SERVER_PORT = 18002;
+    static constexpr uint16_t TCP_SERVER_PROXY_PORT = 18003;
     
     // Member variables
     std::unique_ptr<logger::ILogger> logger_;

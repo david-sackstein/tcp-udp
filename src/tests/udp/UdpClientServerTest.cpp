@@ -20,7 +20,7 @@ void UdpClientServerTest::runTest() const {
     const bool sent = client->send_to(server_endpoint, ConstBuffer(msg, msg_len));
     ASSERT_TRUE(sent);
 
-    OwnedBuffer buffer(1024);
+    OwnedBuffer buffer(BUFFER_SIZE);
 
     Endpoint sender;
 

@@ -25,7 +25,7 @@ TEST_F(ProxyChainTest, EndToEnd) {
     auto size = session->write(ConstBuffer(msg, 5), block);
     (void) size;
 
-    OwnedBuffer buffer(1024);
+    OwnedBuffer buffer(BUFFER_SIZE);
 
     const auto result = session->read(buffer.view(), block);
 
@@ -45,8 +45,8 @@ TEST_F(ProxyChainTest, StressTest) {
 
     ASSERT_TRUE(session);
 
-    const int num_requests = 10000;
-    OwnedBuffer buffer(1024);
+    const int num_requests = STRESS_TEST_REQUESTS;
+    OwnedBuffer buffer(BUFFER_SIZE);
 
     for (int i = 1; i <= num_requests; i++) {
         // Create message with incrementing number
@@ -69,7 +69,7 @@ TEST_F(ProxyChainTest, StressTest) {
         ASSERT_EQ(expected_response, response) << "Failed on request " << i;
 
         // Progress indicator every 1000 requests
-        if (i % 1000 == 0) {
+        if (i % PROGRESS_INDICATOR_INTERVAL == 0) {
             logger_->log(logger::LogLevel::INFO, "StressTest: Completed %d/%d requests", i, num_requests);
         }
     }

@@ -24,10 +24,10 @@ std::unique_ptr<ITask> NotificationHandler::handle_client(std::unique_ptr<tcp::I
     }
 
     return std::make_unique<RunningTask>([shared_session, this](std::atomic<bool>& cancelled) {
-        OwnedBuffer buffer_in(1024);
+        OwnedBuffer buffer_in(BUFFER_SIZE);
 
         while (!cancelled) {
-            auto read_result = shared_session->read(buffer_in.view(), std::chrono::milliseconds(100));
+            auto read_result = shared_session->read(buffer_in.view(), TIMEOUT_MS);
             
             if (read_result.code == IOResultCode::Error || 
                 read_result.code == IOResultCode::ConnectionClosed) {
@@ -45,7 +45,7 @@ std::unique_ptr<ITask> NotificationHandler::handle_client(std::unique_ptr<tcp::I
             // Send echo response to the sender
             std::string echo_response = "echo [" + received_message + "]";
             ConstBuffer echo_buffer(echo_response.data(), echo_response.size());
-            auto echo_result = shared_session->write(echo_buffer, std::chrono::milliseconds(100));
+            auto echo_result = shared_session->write(echo_buffer, TIMEOUT_MS);
             logger_.log(logger::LogLevel::INFO, "NotificationHandler: Sent echo response to sender");
 
             // Send notification to all OTHER clients
@@ -56,7 +56,7 @@ std::unique_ptr<ITask> NotificationHandler::handle_client(std::unique_ptr<tcp::I
             logger_.log(logger::LogLevel::INFO, "NotificationHandler: Sending notifications to %zu other clients", active_sessions_.size() - 1);
             for (auto& session : active_sessions_) {
                 if (session.get() != shared_session.get()) {
-                    auto notify_result = session->write(notify_buffer, std::chrono::milliseconds(100));
+                    auto notify_result = session->write(notify_buffer, TIMEOUT_MS);
                     logger_.log(logger::LogLevel::INFO, "NotificationHandler: Sent notification to other client");
                 }
             }

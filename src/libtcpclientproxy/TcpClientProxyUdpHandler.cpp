@@ -1,5 +1,6 @@
 #include "TcpClientProxyUdpHandler.h"
 
+#include <common/Constants.h>
 #include <common/StringUtils.h>
 #include <libacetools/IOResult.h>
 
@@ -32,7 +33,7 @@ std::unique_ptr<ITask> TcpClientProxyUdpHandler::handle_client(udp::IUdpSession&
 
 void TcpClientProxyUdpHandler::sendToTcpServer(const UdpTcpBinding& binding, ConstBuffer data, const Endpoint& udp_sender) const {
     auto& tcp_session = binding.get_tcp_session();
-    auto tcp_send_result = tcp_session.write(data, std::chrono::milliseconds(1000));
+    auto tcp_send_result = tcp_session.write(data, common::STANDARD_TIMEOUT);
     
     if (tcp_send_result.code == IOResultCode::Error) {
         throw std::runtime_error(format_string(

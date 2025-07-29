@@ -12,10 +12,15 @@ public:
     void TearDown() override;
 
 protected:
-    const uint16_t TCP_CLIENT_PORT = 15000;
-    const uint16_t TCP_SERVER_PROXY_PORT = 15001;
-    const uint16_t TCP_CLIENT_PROXY_PORT = 15002;
-    const uint16_t TCP_SERVER_PORT = 15003;
+    // Test constants
+    static constexpr uint16_t TCP_CLIENT_PORT = 15000;
+    static constexpr uint16_t TCP_SERVER_PROXY_PORT = 15001;
+    static constexpr uint16_t TCP_CLIENT_PROXY_PORT = 15002;
+    static constexpr uint16_t TCP_SERVER_PORT = 15003;
+
+    static constexpr size_t BUFFER_SIZE = 1024;
+    static constexpr int STRESS_TEST_REQUESTS = 10000;
+    static constexpr int PROGRESS_INDICATOR_INTERVAL = 1000;
 
     std::unique_ptr<logger::ILogger> logger_;
     std::unique_ptr<tcp::ITcpClientHandler> client_handler_;
