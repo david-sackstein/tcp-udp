@@ -33,6 +33,12 @@ private:
     std::string generateLargeMessage(size_t size) const;
     bool verifyMessageIntegrity(const std::string& original, const std::string& received);
     
+    // Extracted methods from runLargeMessageTest
+    std::vector<uint16_t> setupTestInfrastructure(bool useProxies);
+    void sendLargeMessage(std::shared_ptr<tcp::ITcpSession> session, const std::string& message);
+    std::string receiveAndVerifyMessage(std::shared_ptr<tcp::ITcpSession> session, const std::string& originalMessage);
+    std::string handleMessageFragmentation(std::shared_ptr<tcp::ITcpSession> session, size_t expectedSize);
+    
     // Port constants
     const uint16_t TCP_CLIENT_PORT = 18000;
     const uint16_t TCP_CLIENT_PROXY_PORT = 18001;

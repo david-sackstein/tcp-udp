@@ -188,12 +188,72 @@ bool LargeMessageTest::verifyMessageIntegrity(const std::string& original, const
     return true;
 }
 
+std::vector<uint16_t> LargeMessageTest::setupTestInfrastructure(bool useProxies) {
+    logger_->log(logger::LogLevel::INFO, "Setting up test infrastructure (useProxies=%s)", 
+                useProxies ? "true" : "false");
+    return useProxies ? setupProxyChain() : setupDirectConnection();
+}
+
+void LargeMessageTest::sendLargeMessage(std::shared_ptr<tcp::ITcpSession> session, const std::string& message) {
+    logger_->log(logger::LogLevel::INFO, "Sending message of %zu bytes...", message.length());
+    ConstBuffer send_buffer(message.data(), message.length());
+    auto write_result = session->write(send_buffer, std::chrono::milliseconds(5000));
+    EXPECT_EQ(write_result.code, IOResultCode::Success);
+    EXPECT_EQ(write_result.count, message.length());
+}
+
+std::string LargeMessageTest::receiveAndVerifyMessage(std::shared_ptr<tcp::ITcpSession> session, const std::string& originalMessage) {
+    logger_->log(logger::LogLevel::INFO, "Reading echo response...");
+    std::string receivedMessage = handleMessageFragmentation(session, originalMessage.length());
+    
+    // No prefix to remove, the entire received message is the echo content
+    std::string actualEchoContent = receivedMessage;
+    
+    // Verify message integrity
+    EXPECT_TRUE(verifyMessageIntegrity(originalMessage, actualEchoContent));
+    
+    return actualEchoContent;
+}
+
+std::string LargeMessageTest::handleMessageFragmentation(std::shared_ptr<tcp::ITcpSession> session, size_t expectedSize) {
+    OwnedBuffer receive_buffer(expectedSize * 2); // Extra space to be safe
+    size_t totalReceived = 0;
+    
+    // Read in a loop until we get all the data (TCP may fragment)
+    while (totalReceived < expectedSize) {
+        size_t remaining = expectedSize - totalReceived;
+        Buffer read_buffer{
+            receive_buffer.view().data + totalReceived, 
+            std::min(remaining, receive_buffer.view().size - totalReceived)
+        };
+        
+        auto read_result = session->read(read_buffer, std::chrono::milliseconds(2000));
+        
+        if (read_result.code == IOResultCode::Timeout) {
+            logger_->log(logger::LogLevel::ERROR, "Read timeout, received %zu/%zu bytes so far", totalReceived, expectedSize);
+            continue;
+        }
+        
+        EXPECT_EQ(read_result.code, IOResultCode::Success);
+        EXPECT_GT(read_result.count, 0u);
+        
+        totalReceived += read_result.count;
+        logger_->log(logger::LogLevel::INFO, "Read %zu bytes, total received: %zu/%zu", 
+                    read_result.count, totalReceived, expectedSize);
+    }
+    
+    // Construct received message
+    std::string receivedMessage;
+    receivedMessage.assign(receive_buffer.view().data, totalReceived);
+    return receivedMessage;
+}
+
 void LargeMessageTest::runLargeMessageTest(bool useProxies, size_t messageSize) {
     logger_->log(logger::LogLevel::INFO, "Starting large message test (useProxies=%s, size=%zu)", 
                 useProxies ? "true" : "false", messageSize);
     
     // Setup infrastructure
-    std::vector<uint16_t> target_ports = useProxies ? setupProxyChain() : setupDirectConnection();
+    std::vector<uint16_t> target_ports = setupTestInfrastructure(useProxies);
     
     // Connect client
     auto session = createAndConnectClient(target_ports[0]);
@@ -204,51 +264,10 @@ void LargeMessageTest::runLargeMessageTest(bool useProxies, size_t messageSize) 
     ASSERT_EQ(originalMessage.length(), messageSize);
     
     // Send message
-    logger_->log(logger::LogLevel::INFO, "Sending message of %zu bytes...", originalMessage.length());
-    ConstBuffer send_buffer(originalMessage.data(), originalMessage.length());
-    auto write_result = session->write(send_buffer, std::chrono::milliseconds(5000));
-    ASSERT_EQ(write_result.code, IOResultCode::Success);
-    ASSERT_EQ(write_result.count, messageSize);
+    sendLargeMessage(session, originalMessage);
     
-    // Receive echo response
-    logger_->log(logger::LogLevel::INFO, "Reading echo response...");
-    OwnedBuffer receive_buffer(messageSize * 2); // Extra space to be safe
-    std::string receivedMessage;
-    size_t totalReceived = 0;
-    
-    // Read in a loop until we get all the data (TCP may fragment)
-    // No prefix added, so expected size is same as original
-    size_t expectedTotalSize = messageSize;
-    while (totalReceived < expectedTotalSize) {
-        size_t remaining = expectedTotalSize - totalReceived;
-        Buffer read_buffer{
-            receive_buffer.view().data + totalReceived, 
-            std::min(remaining, receive_buffer.view().size - totalReceived)
-        };
-        
-        auto read_result = session->read(read_buffer, std::chrono::milliseconds(2000));
-        
-        if (read_result.code == IOResultCode::Timeout) {
-            logger_->log(logger::LogLevel::ERROR, "Read timeout, received %zu/%zu bytes so far", totalReceived, expectedTotalSize);
-            continue;
-        }
-        
-        ASSERT_EQ(read_result.code, IOResultCode::Success);
-        ASSERT_GT(read_result.count, 0u);
-        
-        totalReceived += read_result.count;
-        logger_->log(logger::LogLevel::INFO, "Read %zu bytes, total received: %zu/%zu", 
-                    read_result.count, totalReceived, expectedTotalSize);
-    }
-    
-    // Construct received message
-    receivedMessage.assign(receive_buffer.view().data, totalReceived);
-    
-    // No prefix to remove, the entire received message is the echo content
-    std::string actualEchoContent = receivedMessage;
-    
-    // Verify message integrity
-    ASSERT_TRUE(verifyMessageIntegrity(originalMessage, actualEchoContent));
+    // Receive and verify message
+    receiveAndVerifyMessage(session, originalMessage);
     
     logger_->log(logger::LogLevel::INFO, "Large message test completed successfully (useProxies=%s, size=%zu)", 
                 useProxies ? "true" : "false", messageSize);

@@ -29,11 +29,28 @@ private:
     
     // Test execution methods
     void sendMessageRounds(
+        const std::shared_ptr<tcp::ITcpSession> &session1,
+        const std::shared_ptr<tcp::ITcpSession> &session2,
+        const std::shared_ptr<tcp::ITcpSession> &session3) const;
+    
+    std::tuple<std::string, std::string, std::string> readAllMessages(
+        const std::shared_ptr<tcp::ITcpSession> &session1,
+        const std::shared_ptr<tcp::ITcpSession> &session2,
+        const std::shared_ptr<tcp::ITcpSession> &session3);
+    
+    static std::vector<std::string> readMessagesFromSession(std::shared_ptr<tcp::ITcpSession> session);
+
+    static std::vector<std::string> processReceivedMessages(const std::shared_ptr<tcp::ITcpSession> &session);
+
+    static std::string combineMessages(const std::vector<std::string>& messages);
+    
+    std::vector<uint16_t> setupNotificationTest(bool useProxies);
+    void executeNotificationRound(
         std::shared_ptr<tcp::ITcpSession> session1,
         std::shared_ptr<tcp::ITcpSession> session2,
         std::shared_ptr<tcp::ITcpSession> session3);
-    
-    std::tuple<std::string, std::string, std::string> readAllMessages(
+
+    void verifyCrossClientNotifications(
         std::shared_ptr<tcp::ITcpSession> session1,
         std::shared_ptr<tcp::ITcpSession> session2,
         std::shared_ptr<tcp::ITcpSession> session3);
@@ -42,11 +59,11 @@ private:
         const std::vector<std::string>& client1_messages,
         const std::vector<std::string>& client2_messages,
         const std::vector<std::string>& client3_messages) const;
-    
-    void verifyNotifications(
+
+    static void verifyNotifications(
         const std::string& client1_combined,
         const std::string& client2_combined,
-        const std::string& client3_combined) const;
+        const std::string& client3_combined);
 
     // Port constants
     const uint16_t TCP_CLIENT1_PORT = 16000;
