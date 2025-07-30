@@ -24,4 +24,7 @@
 3. Standard library headers (C++ standard library includes)
 4. System headers (OS-specific and third-party library headers)
 
-Separate each group with an empty line. Within each group, sort includes alphabetically. Use consistent include style (prefer #include "local.h" for local headers, #include <library.h> for external headers). 
+Separate each group with an empty line. Within each group, sort includes alphabetically. Use consistent include style (prefer #include "local.h" for local headers, #include <library.h> for external headers).
+
+## Clang-Tidy
+After every code change, run `make clang-tidy-fix` to check and fix clang-tidy issues. 
