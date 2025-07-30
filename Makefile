@@ -21,6 +21,7 @@ endif
 
 CXX := g++
 CXXFLAGS := -std=c++17 -Wall -Wextra -Werror -g -O0 -Wno-deprecated-declarations -fvisibility=hidden -fPIC -MMD -MP
+COMPILE_COMMANDS_FLAGS := -std=c++17 -Wall -Wextra -g -O0 -Wno-deprecated-declarations -fvisibility=hidden -fPIC -MMD -MP
 LDFLAGS += $(RPATH_FLAG) -L$(ACE_LIBDIR)
 
 INCLUDES := \
@@ -37,7 +38,10 @@ GTEST_OPTS :=
 
 # ================================
 # Phony Targets
-.PHONY: all clean tests proxytest tcptest udptest notificationtest bin build format format-check install-clang-format
+.PHONY: all clean tests proxytest tcptest udptest notificationtest bin build\
+ 	clang-format clang-format-fix install-clang-format \
+ 	clang-tidy clang-tidy-fix install-clang-tidy \
+ 	install-bear compile-commands
 
 # ================================
 # Directory Creation
@@ -78,14 +82,14 @@ $(LIBUDP): $(LIBUDP_OBJS) $(LIBACETOOLS) | $(BIN_DIR)
 LIBTCPCLIENTPROXY_SRCS := $(shell find src/libtcpclientproxy -name '*.cpp')
 LIBTCPCLIENTPROXY_OBJS := $(patsubst src/%.cpp,$(OBJ_DIR)/%.o,$(LIBTCPCLIENTPROXY_SRCS))
 LIBTCPCLIENTPROXY := $(BIN_DIR)/libtcpclientproxy.$(SO_EXT)
-$(LIBTCPCLIENTPROXY): $(LIBTCPCLIENTPROXY_OBJS) $(LIBACETOOLS) | $(BIN_DIR)
+$(LIBTCPCLIENTPROXY): $(LIBTCPCLIENTPROXY_OBJS) $(LIBACETOOLS) $(LIBTCP) $(LIBUDP) | $(BIN_DIR)
 	$(CXX) -shared -o $@ $^ $(LDFLAGS) -L$(BIN_DIR) -ltcp -ludp -lacetools -l$(ACE_LIB)
 
 # libtcpserverproxy
 LIBTCPSERVERPROXY_SRCS := $(shell find src/libtcpserverproxy -name '*.cpp')
 LIBTCPSERVERPROXY_OBJS := $(patsubst src/%.cpp,$(OBJ_DIR)/%.o,$(LIBTCPSERVERPROXY_SRCS))
 LIBTCPSERVERPROXY := $(BIN_DIR)/libtcpserverproxy.$(SO_EXT)
-$(LIBTCPSERVERPROXY): $(LIBTCPSERVERPROXY_OBJS) $(LIBACETOOLS) | $(BIN_DIR)
+$(LIBTCPSERVERPROXY): $(LIBTCPSERVERPROXY_OBJS) $(LIBACETOOLS) $(LIBTCP) $(LIBUDP) | $(BIN_DIR)
 	$(CXX) -shared -o $@ $^ $(LDFLAGS) -L$(BIN_DIR) -ltcp -ludp -lacetools -l$(ACE_LIB)
 
 # libargsparser
@@ -143,20 +147,46 @@ $(TESTS): $(TEST_OBJS) $(LIBTCP) $(LIBUDP) $(LIBACETOOLS) $(LIBTCPCLIENTPROXY) $
 # Clang-format Installation Target
 install-clang-format:
 	@echo "Installing clang-format..."
-	@./scripts/install_clang_format.sh || echo "clang-format installation failed, but build will continue"
+	@./scripts/clang/install_clang_format.sh || echo "clang-format installation failed, but build will continue"
 
-# Format Target
-format:
-	@./scripts/apply_formatting.sh
+# Clang-tidy Installation Target
+install-clang-tidy:
+	@echo "Installing clang-tidy..."
+	@./scripts/clang/install_clang_tidy.sh || echo "clang-tidy installation failed, but build will continue"
 
-# Format check target (doesn't modify files)
-format-check:
-	@./scripts/check_formatting.sh
+# Clang-format target (check formatting without modifying files)
+clang-format:
+	@./scripts/clang/check_formatting.sh
+
+# Clang-format with fixes target (apply formatting)
+clang-format-fix:
+	@./scripts/clang/apply_formatting.sh
+
+# Clang-tidy target (using compile database)
+clang-tidy:
+	@./scripts/clang/run_clang_tidy_with_compile_db.sh
+
+# Clang-tidy with fixes target
+clang-tidy-fix:
+	@./scripts/clang/run_clang_tidy_with_compile_db.sh
+
+# ================================
+# Compile Database Management
+
+# Install bear for generating compile_commands.json
+install-bear:
+	@./scripts/clang/install_bear.sh
+
+# Generate compile_commands.json using bear
+compile-commands:
+	@./scripts/clang/generate_compile_commands.sh
 
 # ================================
 # Default Target: Build Everything
-all: format $(LIBACETOOLS) $(LIBTCP) $(LIBUDP) $(LIBTCPCLIENTPROXY) $(LIBTCPSERVERPROXY) \
+all: clang-format-fix $(LIBACETOOLS) $(LIBTCP) $(LIBUDP) $(LIBTCPCLIENTPROXY) $(LIBTCPSERVERPROXY) \
      $(TCPCLIENT) $(TCP_ECHO_SERVER) $(UDP_ECHO_SERVER) $(TCPCLIENTPROXY) $(TCPSERVERPROXY) $(TESTS)
+
+
 
 # ================================
 # Pattern Rule for Object Files

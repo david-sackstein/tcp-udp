@@ -1,0 +1,6 @@
+---
+Checks: '*
+         -clang-diagnostic-pragma-once-outside-header'
+WarningsAsErrors: ''
+HeaderFilterRegex: ''
+FormatStyle: file 

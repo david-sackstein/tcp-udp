@@ -5,6 +5,7 @@
 #include <common/task/RunningTask.h>
 
 #include <memory>
+
 #include <string>
 
 TcpEchoHandler::TcpEchoHandler(logger::ILogger& logger) : logger_(logger) {}

@@ -24,6 +24,6 @@ if find src include -name '*.cpp' -o -name '*.h' | xargs clang-format --dry-run 
     echo "Format check passed."
     exit 0
 else
-    echo "Format check failed. Run 'make format' to fix formatting issues."
+    echo "Format check failed. Run 'make clang-format-fix' to fix formatting issues."
     exit 1
 fi 

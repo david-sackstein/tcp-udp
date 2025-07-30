@@ -21,7 +21,7 @@ std::unique_ptr<ITask> ServerProxyClientHandler::handle_client(std::unique_ptr<t
     std::string client_key = client_key_manager_->generateClientKey(*client_session);
     client_key_manager_->logClientConnection(client_key);
 
-    std::shared_ptr<tcp::ITcpSession> shared_session = std::move(client_session);
+    std::shared_ptr shared_session = std::move(client_session);
     udp_handler_->register_tcp_session(client_key, shared_session);
 
     return session_manager_->createSessionTask(
