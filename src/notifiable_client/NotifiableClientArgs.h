@@ -1,9 +1,6 @@
 #pragma once
 
-#include <libargsparser/Exports.h>
-
 #include <string>
-#include <vector>
 
 class NotifiableClientArgs final {
 public:
@@ -28,8 +25,8 @@ public:
     }
 
 private:
-    bool handle_client_id_argument(const std::string& value, std::string&);
-    bool handle_interval_argument(const std::string& value, std::string&);
+    bool handle_client_id_argument(const std::string& value);
+    bool handle_interval_argument(const std::string& value);
     void handle_error(const std::string& error);
 
     std::string endpoint_;

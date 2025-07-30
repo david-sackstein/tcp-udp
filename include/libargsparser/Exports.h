@@ -1,6 +1,7 @@
 #pragma once
 
 #include <common/Exported.h>
+#include <liblogger/ILogger.h>
 
 #include <functional>
 #include <string>
@@ -21,3 +22,10 @@ EXPORTED std::pair<std::string, std::string> get_endpoint_configuration(int argc
     const std::vector<std::string>& local_addresses);
 
 EXPORTED std::string get_listen_endpoint(int argc, char* argv[], const std::vector<std::string>& local_addresses);
+
+EXPORTED std::string get_flag_value(int argc,
+    char* argv[],
+    const std::string& flag_name,
+    const std::string& default_value = "");
+
+EXPORTED bool check_and_cleanup_port(logger::ILogger& logger, const std::string& endpoint, bool force = false);

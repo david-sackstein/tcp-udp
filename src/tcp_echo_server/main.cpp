@@ -9,6 +9,17 @@ int main(int argc, char* argv[]) {
     const auto& local_addresses = tcp::get_local_ipv4_addresses();
 
     std::string listen_endpoint_str = get_listen_endpoint(argc, argv, local_addresses);
+
+    // Get --force flag value
+    std::string force_flag = get_flag_value(argc, argv, "--force", "false");
+    bool force = (force_flag == "true");
+
+    // Port cleanup
+    if (!check_and_cleanup_port(*logger, listen_endpoint_str, force)) {
+        logger->log(logger::LogLevel::ERROR, "Port cleanup failed. Exiting.");
+        return 1;
+    }
+
     Endpoint listen_ep = Endpoint::from_string(listen_endpoint_str);
 
     std::unique_ptr<tcp::ITcpClientHandler> echo_handler = tcp::create_tcp_echo_handler(*logger);

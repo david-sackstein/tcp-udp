@@ -1,7 +1,6 @@
 #include <libargsparser/Exports.h>
 #include <liblogger/Exports.h>
 #include <libtcp/Exports.h>
-#include <iostream>
 
 int main(int argc, char* argv[]) {
     auto logger = logger::create_console_logger(logger::LogLevel::ERROR);
@@ -9,8 +8,18 @@ int main(int argc, char* argv[]) {
     const auto& local_addresses = tcp::get_local_ipv4_addresses();
 
     std::string listen_endpoint_str = get_listen_endpoint(argc, argv, local_addresses);
-    Endpoint listen_ep = Endpoint::from_string(listen_endpoint_str);
 
+    // Get --force flag value
+    std::string force_flag = get_flag_value(argc, argv, "--force", "false");
+    bool force = (force_flag == "true");
+
+    // Port cleanup
+    if (!check_and_cleanup_port(*logger, listen_endpoint_str, force)) {
+        logger->log(logger::LogLevel::ERROR, "Port cleanup failed. Exiting.");
+        return 1;
+    }
+
+    Endpoint listen_ep = Endpoint::from_string(listen_endpoint_str);
     std::unique_ptr<tcp::ITcpClientHandler> notification_handler = tcp::create_tcp_notification_handler(*logger);
     auto server = tcp::create_tcp_server(*logger, listen_ep, *notification_handler);
 
