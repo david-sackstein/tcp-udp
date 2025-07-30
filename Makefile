@@ -154,13 +154,15 @@ install-clang-tidy:
 	@echo "Installing clang-tidy..."
 	@./scripts/clang/install_clang_tidy.sh || echo "clang-tidy installation failed, but build will continue"
 
+CLANG_FORMAT_SCRIPT := ./scripts/clang/run_clang_format.sh
+
 # Clang-format target (check formatting without modifying files)
 clang-format:
-	@./scripts/clang/check_formatting.sh
+	$(CLANG_FORMAT_SCRIPT) --check
 
 # Clang-format with fixes target (apply formatting)
 clang-format-fix:
-	@./scripts/clang/apply_formatting.sh
+	$(CLANG_FORMAT_SCRIPT) --fix
 
 CLANG_TIDY_SCRIPT := ./scripts/clang/run_clang_tidy.sh
 
