@@ -6,7 +6,7 @@
 #include <thread>
 
 int main(int argc, char* argv[]) {
-    auto logger = logger::create_console_logger(logger::LogLevel::ERROR);
+    auto logger = logger::create_console_logger(logger::LogLevel::INFO);
     logger->log(logger::LogLevel::INFO, "Notifiable Client");
 
     // Parse command line arguments

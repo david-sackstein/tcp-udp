@@ -18,4 +18,4 @@ private:
 
     logger::ILogger& logger_;
 };
-}
+} // namespace argsparser

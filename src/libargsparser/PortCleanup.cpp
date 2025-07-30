@@ -83,4 +83,4 @@ void PortCleanup::log_port_status(int port, bool in_use) {
         logger_.log(logger::LogLevel::INFO, "Port %d is available", port);
     }
 }
-}
+} // namespace argsparser

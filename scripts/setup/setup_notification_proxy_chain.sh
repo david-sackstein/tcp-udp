@@ -1,29 +1,91 @@
 #!/bin/bash
 
-# Setup Notification Proxy Chain
-# This script sets up a proxy chain similar to the Notification test:
-# 3 TCP clients -> 3 server proxies -> 1 client proxy -> 1 TCP echo server
+# =============================================================================
+# Distributed Notification System Setup Script
+# =============================================================================
+# 
+# This script sets up a complete distributed notification system with the
+# following architecture:
+#
+# 3 Notifiable Clients -> 3 Client Proxies -> 1 Server Proxy -> 1 Notifying Server
+#
+# Architecture Overview:
+# ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+# │ Notifiable      │───▶│ Client Proxy 1   │───▶│                 │
+# │ Client 1        │    │ (Port: 16001)    │    │                 │
+# │ (Port: 16000)   │    └──────────────────┘    │                 │
+# └─────────────────┘                            │                 │
+# ┌─────────────────┐    ┌──────────────────┐    │                 │    ┌─────────────────┐
+# │ Notifiable      │───▶│ Client Proxy 2   │───▶│  Server Proxy   │───▶│  Notifying      │
+# │ Client 2        │    │ (Port: 16003)    │    │ (Port: 16005)   │    │  Server         │
+# │ (Port: 16002)   │    └──────────────────┘    │                 │    │ (Port: 16006)   │
+# └─────────────────┘                            │                 │    └─────────────────┘
+# ┌─────────────────┐    ┌──────────────────┐    │                 │
+# │ Notifiable      │───▶│ Client Proxy 3   │───▶│                 │
+# │ Client 3        │    │ (Port: 16004)    │    │                 │
+# │ (Port: 16007)   │    └──────────────────┘    │                 │
+# └─────────────────┘                            └─────────────────┘
+#
+# Each client sends requests with its ID every second and receives
+# notifications from the server about requests from other clients.
+# =============================================================================
 
 set -e  # Exit on any error
 
-# Colors for output
+# =============================================================================
+# COLOR DEFINITIONS FOR OUTPUT
+# =============================================================================
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
+PURPLE='\033[0;35m'
+CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
-# Port configuration (matching NotificationTest.h)
-TCP_CLIENT1_PORT=16000
-TCP_CLIENT2_PORT=16001
-TCP_CLIENT3_PORT=16002
-TCP_CLIENT_PROXY_PORT=17002
-TCP_SERVER_PORT=17003
-TCP_SERVER_PROXY1_PORT=17001
-TCP_SERVER_PROXY2_PORT=17004
-TCP_SERVER_PROXY3_PORT=17005
+# =============================================================================
+# PORT CONSTANTS - CLEARLY DEFINED FOR EASY UNDERSTANDING
+# =============================================================================
 
-# Function to print colored output
+# Client Application Ports
+# Each notifiable client runs on its own port
+NOTIFIABLE_CLIENT1_PORT=16000
+NOTIFIABLE_CLIENT2_PORT=16002
+NOTIFIABLE_CLIENT3_PORT=16007
+
+# TCP Client Proxy Port
+# The TCP client proxy receives connections from all TCP server proxies
+# and forwards to the notifying server
+TCP_CLIENT_PROXY_PORT=16001
+
+# TCP Server Proxy Ports
+# Each TCP server proxy listens for connections from its assigned client
+# and forwards to the TCP client proxy
+TCP_SERVER_PROXY1_PORT=16003
+TCP_SERVER_PROXY2_PORT=16004
+TCP_SERVER_PROXY3_PORT=16005
+
+# Notifying Server Port
+# The notifying server receives all requests and sends notifications
+# to all connected clients
+NOTIFYING_SERVER_PORT=16006
+
+# =============================================================================
+# CLIENT ID CONSTANTS
+# =============================================================================
+CLIENT1_ID="client1"
+CLIENT2_ID="client2"
+CLIENT3_ID="client3"
+
+# =============================================================================
+# REQUEST INTERVAL CONSTANTS
+# =============================================================================
+REQUEST_INTERVAL_MS=1000  # 1 second between requests
+
+# =============================================================================
+# OUTPUT FUNCTIONS
+# =============================================================================
+
 print_status() {
     echo -e "${BLUE}[INFO]${NC} $1"
 }
@@ -40,11 +102,26 @@ print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
+print_header() {
+    echo -e "${PURPLE}==============================================================================${NC}"
+    echo -e "${PURPLE}$1${NC}"
+    echo -e "${PURPLE}==============================================================================${NC}"
+}
+
+print_subheader() {
+    echo -e "${CYAN}$1${NC}"
+}
+
+# =============================================================================
+# UTILITY FUNCTIONS
+# =============================================================================
+
 # Function to check if a port is in use
 check_port() {
     local port=$1
+    local service_name=$2
     if lsof -i :$port >/dev/null 2>&1; then
-        print_warning "Port $port is already in use"
+        print_warning "Port $port ($service_name) is already in use"
         return 1
     fi
     return 0
@@ -53,7 +130,18 @@ check_port() {
 # Function to kill processes on specific ports
 kill_ports() {
     print_status "Killing any existing processes on our ports..."
-    for port in $TCP_SERVER_PORT $TCP_CLIENT_PROXY_PORT $TCP_SERVER_PROXY1_PORT $TCP_SERVER_PROXY2_PORT $TCP_SERVER_PROXY3_PORT; do
+    local ports=(
+        $NOTIFYING_SERVER_PORT
+        $TCP_CLIENT_PROXY_PORT
+        $TCP_SERVER_PROXY1_PORT
+        $TCP_SERVER_PROXY2_PORT
+        $TCP_SERVER_PROXY3_PORT
+        $NOTIFIABLE_CLIENT1_PORT
+        $NOTIFIABLE_CLIENT2_PORT
+        $NOTIFIABLE_CLIENT3_PORT
+    )
+    
+    for port in "${ports[@]}"; do
         if lsof -i :$port >/dev/null 2>&1; then
             sudo lsof -i :$port -sTCP:LISTEN -t | xargs -r sudo kill -9
             print_status "Killed processes on port $port"
@@ -81,116 +169,242 @@ wait_for_service() {
     return 1
 }
 
+# Function to wait for a UDP service to be ready
+wait_for_udp_service() {
+    local port=$1
+    local service_name=$2
+    local max_attempts=30
+    local attempt=1
+    
+    print_status "Waiting for $service_name on UDP port $port..."
+    while [ $attempt -le $max_attempts ]; do
+        if lsof -i UDP:$port >/dev/null 2>&1; then
+            print_success "$service_name is ready on UDP port $port"
+            return 0
+        fi
+        sleep 1
+        attempt=$((attempt + 1))
+    done
+    print_error "$service_name failed to start on UDP port $port"
+    return 1
+}
+
 # Function to cleanup on exit
 cleanup() {
-    print_status "Cleaning up..."
-    if [ ! -z "$TCP_SERVER_PID" ]; then
-        kill $TCP_SERVER_PID 2>/dev/null || true
+    print_header "CLEANING UP"
+    print_status "Stopping all running processes..."
+    
+    # Kill all background processes
+    if [ ! -z "$NOTIFYING_SERVER_PID" ]; then
+        kill $NOTIFYING_SERVER_PID 2>/dev/null || true
+        print_status "Stopped Notifying Server"
     fi
-    if [ ! -z "$CLIENT_PROXY_PID" ]; then
-        kill $CLIENT_PROXY_PID 2>/dev/null || true
+    if [ ! -z "$TCP_CLIENT_PROXY_PID" ]; then
+        kill $TCP_CLIENT_PROXY_PID 2>/dev/null || true
+        print_status "Stopped TCP Client Proxy"
     fi
-    if [ ! -z "$SERVER_PROXY1_PID" ]; then
-        kill $SERVER_PROXY1_PID 2>/dev/null || true
+    if [ ! -z "$TCP_SERVER_PROXY1_PID" ]; then
+        kill $TCP_SERVER_PROXY1_PID 2>/dev/null || true
+        print_status "Stopped TCP Server Proxy 1"
     fi
-    if [ ! -z "$SERVER_PROXY2_PID" ]; then
-        kill $SERVER_PROXY2_PID 2>/dev/null || true
+    if [ ! -z "$TCP_SERVER_PROXY2_PID" ]; then
+        kill $TCP_SERVER_PROXY2_PID 2>/dev/null || true
+        print_status "Stopped TCP Server Proxy 2"
     fi
-    if [ ! -z "$SERVER_PROXY3_PID" ]; then
-        kill $SERVER_PROXY3_PID 2>/dev/null || true
+    if [ ! -z "$TCP_SERVER_PROXY3_PID" ]; then
+        kill $TCP_SERVER_PROXY3_PID 2>/dev/null || true
+        print_status "Stopped TCP Server Proxy 3"
     fi
+    if [ ! -z "$CLIENT1_PID" ]; then
+        kill $CLIENT1_PID 2>/dev/null || true
+        print_status "Stopped Notifiable Client 1"
+    fi
+    if [ ! -z "$CLIENT2_PID" ]; then
+        kill $CLIENT2_PID 2>/dev/null || true
+        print_status "Stopped Notifiable Client 2"
+    fi
+    if [ ! -z "$CLIENT3_PID" ]; then
+        kill $CLIENT3_PID 2>/dev/null || true
+        print_status "Stopped Notifiable Client 3"
+    fi
+    
     kill_ports
+    print_success "Cleanup completed"
 }
 
 # Set up cleanup trap
 trap cleanup EXIT
 
-# Check if executables exist
-if [ ! -f "bin/tcp_echo_server" ]; then
-    print_error "tcp_echo_server executable not found. Please run 'make all' first."
-    exit 1
-fi
+# =============================================================================
+# EXECUTABLE VALIDATION
+# =============================================================================
 
-if [ ! -f "bin/tcpclientproxy" ]; then
-    print_error "tcpclientproxy executable not found. Please run 'make all' first."
-    exit 1
-fi
+print_header "VALIDATING EXECUTABLES"
 
-if [ ! -f "bin/tcpserverproxy" ]; then
-    print_error "tcpserverproxy executable not found. Please run 'make all' first."
-    exit 1
-fi
+# Check if all required executables exist
+required_executables=(
+    "bin/notifying_server"
+    "bin/notifiable_client"
+    "bin/tcpclientproxy"
+    "bin/tcpserverproxy"
+)
 
-if [ ! -f "bin/tcpclient" ]; then
-    print_error "tcpclient executable not found. Please run 'make all' first."
-    exit 1
-fi
+for executable in "${required_executables[@]}"; do
+    if [ ! -f "$executable" ]; then
+        print_error "$executable not found. Please run 'make all' first."
+        exit 1
+    fi
+    print_success "Found $executable"
+done
 
 print_success "All executables found"
 
-# Kill any existing processes
+# =============================================================================
+# PORT VALIDATION
+# =============================================================================
+
+print_header "VALIDATING PORTS"
+
+# Check if any of our ports are already in use
+ports_to_check=(
+    "$NOTIFYING_SERVER_PORT:Notifying Server"
+    "$TCP_CLIENT_PROXY_PORT:TCP Client Proxy"
+    "$TCP_SERVER_PROXY1_PORT:TCP Server Proxy 1"
+    "$TCP_SERVER_PROXY2_PORT:TCP Server Proxy 2"
+    "$TCP_SERVER_PROXY3_PORT:TCP Server Proxy 3"
+    "$NOTIFIABLE_CLIENT1_PORT:Notifiable Client 1"
+    "$NOTIFIABLE_CLIENT2_PORT:Notifiable Client 2"
+    "$NOTIFIABLE_CLIENT3_PORT:Notifiable Client 3"
+)
+
+for port_info in "${ports_to_check[@]}"; do
+    IFS=':' read -r port service_name <<< "$port_info"
+    check_port $port "$service_name" || true
+done
+
+# Kill any existing processes on our ports
 kill_ports
 
-print_status "Setting up Notification Proxy Chain..."
-print_status "Architecture: 3 TCP clients -> 3 server proxies -> 1 client proxy -> 1 TCP echo server"
+# =============================================================================
+# STARTING THE DISTRIBUTED NOTIFICATION SYSTEM
+# =============================================================================
 
-# Start TCP echo server
-print_status "Starting TCP echo server on port $TCP_SERVER_PORT..."
-./bin/tcp_echo_server 127.0.0.1:$TCP_SERVER_PORT &
-TCP_SERVER_PID=$!
-wait_for_service $TCP_SERVER_PORT "TCP Echo Server"
+print_header "STARTING DISTRIBUTED NOTIFICATION SYSTEM"
 
-# Start client proxy
-print_status "Starting TCP client proxy on port $TCP_CLIENT_PROXY_PORT..."
-print_status "Client proxy forwards to TCP server on port $TCP_SERVER_PORT..."
-./bin/tcpclientproxy 127.0.0.1:$TCP_CLIENT_PROXY_PORT 127.0.0.1:$TCP_SERVER_PORT &
-CLIENT_PROXY_PID=$!
-wait_for_service $TCP_CLIENT_PROXY_PORT "TCP Client Proxy"
+print_subheader "Step 1: Starting Notifying Server"
+print_status "Starting Notifying Server on port $NOTIFYING_SERVER_PORT..."
+print_status "This server will receive requests from all clients and send notifications to all connected clients"
+./bin/notifying_server 127.0.0.1:$NOTIFYING_SERVER_PORT &
+NOTIFYING_SERVER_PID=$!
+wait_for_service $NOTIFYING_SERVER_PORT "Notifying Server"
 
-# Start server proxies
-print_status "Starting TCP server proxy 1 on port $TCP_SERVER_PROXY1_PORT..."
+print_subheader "Step 2: Starting TCP Client Proxy"
+print_status "Starting TCP Client Proxy on port $TCP_CLIENT_PROXY_PORT..."
+print_status "TCP Client Proxy forwards connections to Notifying Server on port $NOTIFYING_SERVER_PORT"
+./bin/tcpclientproxy 127.0.0.1:$TCP_CLIENT_PROXY_PORT 127.0.0.1:$NOTIFYING_SERVER_PORT &
+TCP_CLIENT_PROXY_PID=$!
+wait_for_udp_service $TCP_CLIENT_PROXY_PORT "TCP Client Proxy"
+
+print_subheader "Step 3: Starting TCP Server Proxies"
+print_status "Starting TCP Server Proxy 1 on port $TCP_SERVER_PROXY1_PORT..."
+print_status "TCP Server Proxy 1 forwards to TCP Client Proxy on port $TCP_CLIENT_PROXY_PORT"
 ./bin/tcpserverproxy 127.0.0.1:$TCP_SERVER_PROXY1_PORT 127.0.0.1:$TCP_CLIENT_PROXY_PORT &
-SERVER_PROXY1_PID=$!
+TCP_SERVER_PROXY1_PID=$!
 wait_for_service $TCP_SERVER_PROXY1_PORT "TCP Server Proxy 1"
 
-print_status "Starting TCP server proxy 2 on port $TCP_SERVER_PROXY2_PORT..."
+print_status "Starting TCP Server Proxy 2 on port $TCP_SERVER_PROXY2_PORT..."
+print_status "TCP Server Proxy 2 forwards to TCP Client Proxy on port $TCP_CLIENT_PROXY_PORT"
 ./bin/tcpserverproxy 127.0.0.1:$TCP_SERVER_PROXY2_PORT 127.0.0.1:$TCP_CLIENT_PROXY_PORT &
-SERVER_PROXY2_PID=$!
+TCP_SERVER_PROXY2_PID=$!
 wait_for_service $TCP_SERVER_PROXY2_PORT "TCP Server Proxy 2"
 
-print_status "Starting TCP server proxy 3 on port $TCP_SERVER_PROXY3_PORT..."
+print_status "Starting TCP Server Proxy 3 on port $TCP_SERVER_PROXY3_PORT..."
+print_status "TCP Server Proxy 3 forwards to TCP Client Proxy on port $TCP_CLIENT_PROXY_PORT"
 ./bin/tcpserverproxy 127.0.0.1:$TCP_SERVER_PROXY3_PORT 127.0.0.1:$TCP_CLIENT_PROXY_PORT &
-SERVER_PROXY3_PID=$!
+TCP_SERVER_PROXY3_PID=$!
 wait_for_service $TCP_SERVER_PROXY3_PORT "TCP Server Proxy 3"
 
-print_success "All proxy components started successfully!"
+print_subheader "Step 4: Starting Notifiable Clients"
+print_status "Starting Notifiable Client 1 (ID: $CLIENT1_ID)..."
+print_status "Client 1 connects to TCP Server Proxy 1 on port $TCP_SERVER_PROXY1_PORT"
+print_status "Client 1 will send requests every ${REQUEST_INTERVAL_MS}ms"
+./bin/notifiable_client 127.0.0.1:$TCP_SERVER_PROXY1_PORT --client-id $CLIENT1_ID --interval $REQUEST_INTERVAL_MS &
+CLIENT1_PID=$!
 
-# Display the proxy chain architecture
+print_status "Starting Notifiable Client 2 (ID: $CLIENT2_ID)..."
+print_status "Client 2 connects to TCP Server Proxy 2 on port $TCP_SERVER_PROXY2_PORT"
+print_status "Client 2 will send requests every ${REQUEST_INTERVAL_MS}ms"
+./bin/notifiable_client 127.0.0.1:$TCP_SERVER_PROXY2_PORT --client-id $CLIENT2_ID --interval $REQUEST_INTERVAL_MS &
+CLIENT2_PID=$!
+
+print_status "Starting Notifiable Client 3 (ID: $CLIENT3_ID)..."
+print_status "Client 3 connects to TCP Server Proxy 3 on port $TCP_SERVER_PROXY3_PORT"
+print_status "Client 3 will send requests every ${REQUEST_INTERVAL_MS}ms"
+./bin/notifiable_client 127.0.0.1:$TCP_SERVER_PROXY3_PORT --client-id $CLIENT3_ID --interval $REQUEST_INTERVAL_MS &
+CLIENT3_PID=$!
+
+# =============================================================================
+# SYSTEM STATUS DISPLAY
+# =============================================================================
+
+print_header "SYSTEM STATUS"
+
+print_success "All components started successfully!"
+
 echo
-print_status "Proxy Chain Architecture:"
-echo "┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐"
-echo "│   TCP Client 1  │───▶│ Server Proxy 1   │───▶│                 │"
-echo "│   Port: $TCP_CLIENT1_PORT   │    │ Port: $TCP_SERVER_PROXY1_PORT │    │                 │"
-echo "└─────────────────┘    └──────────────────┘    │                 │"
-echo "┌─────────────────┐    ┌──────────────────┐    │                 │"
-echo "│   TCP Client 2  │───▶│ Server Proxy 2   │───▶│  Client Proxy   │───▶│  TCP Echo Server │"
-echo "│   Port: $TCP_CLIENT2_PORT   │    │ Port: $TCP_SERVER_PROXY2_PORT │    │ Port: $TCP_CLIENT_PROXY_PORT │    │ Port: $TCP_SERVER_PORT │"
-echo "└─────────────────┘    └──────────────────┘    │                 │"
-echo "┌─────────────────┐    ┌──────────────────┐    │                 │"
-echo "│   TCP Client 3  │───▶│ Server Proxy 3   │───▶│                 │"
-echo "│   Port: $TCP_CLIENT3_PORT   │    │ Port: $TCP_SERVER_PROXY3_PORT │    │                 │"
-echo "└─────────────────┘    └──────────────────┘    └─────────────────┘"
+print_subheader "Distributed Notification System Architecture:"
+echo "┌─────────────────────┐    ┌─────────────────────┐    ┌─────────────────────┐"
+echo "│ Notifiable Client 1 │───▶│ TCP Server Proxy 1  │───▶│                     │"
+echo "│ ID: $CLIENT1_ID           │    │ Port: $TCP_SERVER_PROXY1_PORT │    │                     │"
+echo "│ Port: $NOTIFIABLE_CLIENT1_PORT │    └─────────────────────┘    │                     │"
+echo "└─────────────────────┘                             │                     │"
+echo "┌─────────────────────┐    ┌─────────────────────┐    │                     │"
+echo "│ Notifiable Client 2 │───▶│ TCP Server Proxy 2  │───▶│  TCP Client Proxy   │───▶│  Notifying Server  │"
+echo "│ ID: $CLIENT2_ID           │    │ Port: $TCP_SERVER_PROXY2_PORT │    │ Port: $TCP_CLIENT_PROXY_PORT │    │ Port: $NOTIFYING_SERVER_PORT │"
+echo "│ Port: $NOTIFIABLE_CLIENT2_PORT │    └─────────────────────┘    │                     │    └─────────────────────┘"
+echo "└─────────────────────┘                             │                     │"
+echo "┌─────────────────────┐    ┌─────────────────────┐    │                     │"
+echo "│ Notifiable Client 3 │───▶│ TCP Server Proxy 3  │───▶│                     │"
+echo "│ ID: $CLIENT3_ID           │    │ Port: $TCP_SERVER_PROXY3_PORT │    │                     │"
+echo "│ Port: $NOTIFIABLE_CLIENT3_PORT │    └─────────────────────┘    │                     │"
+echo "└─────────────────────┘                             └─────────────────────┘"
 echo
 
-print_status "All services are running. You can now:"
-print_status "1. Test with the tcpclient executable:"
-print_status "   ./bin/tcpclient"
-print_status "2. Test with netcat:"
-print_status "   echo 'hello' | nc localhost $TCP_SERVER_PROXY1_PORT"
-print_status "   echo 'hello' | nc localhost $TCP_SERVER_PROXY2_PORT"
-print_status "   echo 'hello' | nc localhost $TCP_SERVER_PROXY3_PORT"
-print_status "3. Press Ctrl+C to stop all services"
+print_subheader "System Behavior:"
+echo "• Each client sends requests with its ID every ${REQUEST_INTERVAL_MS}ms"
+echo "• The server responds to each request and sends notifications to all other clients"
+echo "• All communication flows through the proxy chain for load distribution"
+echo "• The --force flag was used to automatically kill any existing processes on the ports"
+echo
+
+print_subheader "Monitoring Options:"
+echo "1. Watch client logs:"
+echo "   tail -f /dev/null & # Replace with actual log files if implemented"
+echo "2. Monitor network connections:"
+echo "   netstat -tulpn | grep -E '($NOTIFYING_SERVER_PORT|$SERVER_PROXY_PORT|$CLIENT_PROXY1_PORT|$CLIENT_PROXY2_PORT|$CLIENT_PROXY3_PORT)'"
+echo "3. Test individual components:"
+echo "   echo 'test' | nc localhost $CLIENT_PROXY1_PORT"
+echo "   echo 'test' | nc localhost $CLIENT_PROXY2_PORT"
+echo "   echo 'test' | nc localhost $CLIENT_PROXY3_PORT"
+echo "4. Press Ctrl+C to stop all services"
+echo
+
+print_subheader "Expected Behavior:"
+echo "• Client 1 sends requests → Server responds → Clients 2 & 3 receive notifications"
+echo "• Client 2 sends requests → Server responds → Clients 1 & 3 receive notifications"
+echo "• Client 3 sends requests → Server responds → Clients 1 & 2 receive notifications"
+echo "• This creates a distributed notification system where all clients are aware of each other's activity"
+echo
+
+# =============================================================================
+# KEEP SYSTEM RUNNING
+# =============================================================================
+
+print_header "SYSTEM RUNNING"
+
+print_status "Distributed notification system is now running!"
+print_status "All clients are sending requests and receiving notifications from the server."
+print_status "Press Ctrl+C to stop all services and cleanup..."
 
 # Keep the script running
-print_status "Proxy chain is running. Press Ctrl+C to stop..."
 wait 

@@ -3,7 +3,7 @@
 #include <libtcp/Exports.h>
 
 int main(int argc, char* argv[]) {
-    auto logger = logger::create_console_logger(logger::LogLevel::ERROR);
+    auto logger = logger::create_console_logger(logger::LogLevel::INFO);
 
     const auto& local_addresses = tcp::get_local_ipv4_addresses();
 

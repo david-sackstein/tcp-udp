@@ -57,6 +57,9 @@ Every class should be in its own file(s) with the same name. Each class should h
 - Never use variable names like "dummy" or "temp" - use descriptive names like "value" instead
 - Choose variable names that clearly indicate their purpose and content
 
+## Namespace Comments
+- NEVER add namespace comments (like `// namespace xxx`) - they are redundant and clutter the code
+
 ## Build System
 - Follow conventions from other apps - use the same patterns for Makefile and CMakeLists.txt as existing applications
 - Use variables and recursive rules - follow the established build system patterns 

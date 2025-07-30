@@ -22,15 +22,26 @@ std::pair<std::string, std::string> ArgsParser::get_endpoint_configuration(int a
 }
 
 std::string ArgsParser::get_listen_endpoint(int argc, char* argv[], const std::vector<std::string>& local_addresses) {
-    // If exactly 1 argument provided, use command line argument
-    if (argc == 2) {
-        std::string listen_arg = argv[1];
-        if (!EndpointValidator::validate_listen_address(listen_arg, local_addresses)) {
-            Endpoint ep = Endpoint::from_string(listen_arg);
-            EndpointValidator::display_validation_error(ep.address, local_addresses);
-            exit(1);
+    // If at least 2 arguments provided, use command line argument (first non-flag argument)
+    if (argc >= 2) {
+        std::string listen_arg;
+        // Find the first argument that's not a flag (doesn't start with --)
+        for (int i = 1; i < argc; ++i) {
+            std::string arg = argv[i];
+            if (arg.substr(0, 2) != "--") {
+                listen_arg = arg;
+                break;
+            }
         }
-        return listen_arg;
+
+        if (!listen_arg.empty()) {
+            if (!EndpointValidator::validate_listen_address(listen_arg, local_addresses)) {
+                Endpoint ep = Endpoint::from_string(listen_arg);
+                EndpointValidator::display_validation_error(ep.address, local_addresses);
+                exit(1);
+            }
+            return listen_arg;
+        }
     }
 
     // Otherwise, use interactive selection
