@@ -27,4 +27,10 @@
 Separate each group with an empty line. Within each group, sort includes alphabetically. Use consistent include style (prefer #include "local.h" for local headers, #include <library.h> for external headers).
 
 ## Clang-Format
-After every code change, run `make clang-format-fix` to check and fix clang-format issues. 
+After every code change, run `make clang-format-fix` to check and fix clang-format issues.
+
+## Single Responsibility Principle
+Apply the Single Responsibility Principle to classes and methods. Each class and method should have one reason to change.
+
+## Class File Organization
+Every class should be in its own file(s) with the same name. Each class should have its own header (.h) and implementation (.cpp) files. 

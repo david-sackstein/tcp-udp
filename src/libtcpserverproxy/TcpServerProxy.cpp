@@ -58,7 +58,8 @@ int TcpServerProxy::handle_input(ACE_HANDLE) {
     return udp_handler_->handle_udp_input(*udp_client_);
 }
 
-ACE_HANDLE TcpServerProxy::get_handle() const {
+ACE_HANDLE
+TcpServerProxy::get_handle() const {
     // Cast to AceUdpClient to get socket handle
     auto* ace_client = static_cast<const AceUdpClient*>(udp_client_.get());
     return ace_client->get_socket();

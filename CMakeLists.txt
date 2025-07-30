@@ -73,29 +73,34 @@ target_link_libraries(libargsparser PRIVATE libacetools)
 # tcpclient executable
 file(GLOB_RECURSE TCPCLIENT_SOURCES src/tcpclient/*.cpp)
 add_executable(tcpclient ${TCPCLIENT_SOURCES})
-target_link_libraries(tcpclient PRIVATE libtcp liblogger)
+target_link_libraries(tcpclient PRIVATE libtcp libargsparser libacetools liblogger)
 
 # ================================
 # tcp_echo_server executable
 file(GLOB_RECURSE TCP_ECHO_SERVER_SOURCES src/tcp_echo_server/*.cpp)
 add_executable(tcp_echo_server ${TCP_ECHO_SERVER_SOURCES})
-target_link_libraries(tcp_echo_server PRIVATE libtcp libargsparser liblogger)
+target_link_libraries(tcp_echo_server PRIVATE libtcp libargsparser libacetools liblogger)
 
 # ================================
 # udp_echo_server executable
 file(GLOB_RECURSE UDP_ECHO_SERVER_SOURCES src/udp_echo_server/*.cpp)
 add_executable(udp_echo_server ${UDP_ECHO_SERVER_SOURCES})
-target_link_libraries(udp_echo_server PRIVATE libudp libargsparser liblogger)
+target_link_libraries(udp_echo_server PRIVATE libudp libargsparser libacetools liblogger)
 
 # tcpclientproxy executable
 file(GLOB_RECURSE TCPCLIENTPROXY_APP_SOURCES src/tcpclientproxy/*.cpp)
 add_executable(tcpclientproxy ${TCPCLIENTPROXY_APP_SOURCES})
-target_link_libraries(tcpclientproxy PRIVATE libtcpclientproxy libargsparser liblogger)
+target_link_libraries(tcpclientproxy PRIVATE libtcpclientproxy libtcp libudp libargsparser libacetools liblogger)
 
 # tcpserverproxy executable
 file(GLOB_RECURSE TCPSERVERPROXY_APP_SOURCES src/tcpserverproxy/*.cpp)
 add_executable(tcpserverproxy ${TCPSERVERPROXY_APP_SOURCES})
-target_link_libraries(tcpserverproxy PRIVATE libtcpserverproxy libargsparser liblogger)
+target_link_libraries(tcpserverproxy PRIVATE libtcpserverproxy libtcp libudp libargsparser libacetools liblogger)
+
+# notifiable_client executable
+file(GLOB_RECURSE NOTIFIABLE_CLIENT_SOURCES src/notifiable_client/*.cpp)
+add_executable(notifiable_client ${NOTIFIABLE_CLIENT_SOURCES})
+target_link_libraries(notifiable_client PRIVATE libtcp libargsparser libacetools liblogger)
 
 # Tests executable
 file(GLOB_RECURSE TEST_SOURCES src/tests/*.cpp)
@@ -122,7 +127,7 @@ set_target_properties(
 )
 
 set_target_properties(
-        tcpclient tcp_echo_server udp_echo_server tcpclientproxy tcpserverproxy tests
+        tcpclient tcp_echo_server udp_echo_server tcpclientproxy tcpserverproxy notifiable_client tests
         PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin
 )

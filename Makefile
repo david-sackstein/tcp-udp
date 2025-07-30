@@ -136,6 +136,13 @@ TCPSERVERPROXY := $(BIN_DIR)/tcpserverproxy
 $(TCPSERVERPROXY): $(TCPSERVERPROXY_APP_OBJS) $(LIBTCPSERVERPROXY) $(LIBTCP) $(LIBUDP) $(LIBARGSPARSER) $(LIBACETOOLS) $(LIBLOGGER) | $(BIN_DIR)
 	$(CXX) -o $@ $^ $(LDFLAGS) -L$(BIN_DIR) -ltcpserverproxy -ltcp -ludp -largsparser -lacetools -llogger
 
+# notifiable_client executable
+NOTIFIABLE_CLIENT_APP_SRCS := $(shell find src/notifiable_client -name '*.cpp')
+NOTIFIABLE_CLIENT_APP_OBJS := $(patsubst src/%.cpp,$(OBJ_DIR)/%.o,$(NOTIFIABLE_CLIENT_APP_SRCS))
+NOTIFIABLE_CLIENT := $(BIN_DIR)/notifiable_client
+$(NOTIFIABLE_CLIENT): $(NOTIFIABLE_CLIENT_APP_OBJS) $(LIBTCP) $(LIBARGSPARSER) $(LIBACETOOLS) $(LIBLOGGER) | $(BIN_DIR)
+	$(CXX) -o $@ $^ $(LDFLAGS) -L$(BIN_DIR) -ltcp -largsparser -lacetools -llogger
+
 # tests executable
 TEST_SRCS := $(shell find src/tests -name '*.cpp')
 TEST_OBJS := $(patsubst src/%.cpp,$(OBJ_DIR)/%.o,$(TEST_SRCS))
@@ -186,7 +193,7 @@ compile-commands:
 # ================================
 # Default Target: Build Everything
 all: clang-format-fix $(LIBACETOOLS) $(LIBTCP) $(LIBUDP) $(LIBTCPCLIENTPROXY) $(LIBTCPSERVERPROXY) \
-     $(TCPCLIENT) $(TCP_ECHO_SERVER) $(UDP_ECHO_SERVER) $(TCPCLIENTPROXY) $(TCPSERVERPROXY) $(TESTS)
+     $(TCPCLIENT) $(TCP_ECHO_SERVER) $(UDP_ECHO_SERVER) $(TCPCLIENTPROXY) $(TCPSERVERPROXY) $(NOTIFIABLE_CLIENT) $(TESTS)
 
 # ================================
 # Pattern Rule for Object Files

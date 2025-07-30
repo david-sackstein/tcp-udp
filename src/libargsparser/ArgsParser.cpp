@@ -32,6 +32,7 @@ std::string ArgsParser::get_listen_endpoint(int argc, char* argv[], const std::v
         }
         return listen_arg;
     }
+
     // Otherwise, use interactive selection
     std::string local_host = InteractiveConfigurator::select_host(local_addresses);
     int local_port = UserInputHandler::select_port();
