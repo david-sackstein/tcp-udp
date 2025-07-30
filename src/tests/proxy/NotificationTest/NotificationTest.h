@@ -13,18 +13,25 @@
 class MultiClientNotificationTest : public testing::Test {
 public:
     void SetUp() override;
+
     void TearDown() override;
 
 protected:
     // Main test implementations
     void runNotificationTest(bool useProxies);
+
     void runCrossClientNotificationTest(bool useProxies);
 
 private:
     // Setup methods
     void stopAllServers();
+
+    std::unique_ptr<tcp::ITcpClientHandler> createServerHandler(bool useNotificationHandler) const;
+
     std::vector<uint16_t> setupProxyChain(bool useNotificationHandler);
+
     std::vector<uint16_t> setupDirectConnection(bool useNotificationHandler);
+
     std::array<std::shared_ptr<tcp::ITcpSession>, 3> createAndConnectClients(const std::vector<uint16_t>& target_ports);
 
     // Test execution methods
@@ -34,22 +41,23 @@ private:
 
     std::tuple<std::string, std::string, std::string> readAllMessages(const std::shared_ptr<tcp::ITcpSession>& session1,
         const std::shared_ptr<tcp::ITcpSession>& session2,
-        const std::shared_ptr<tcp::ITcpSession>& session3);
+        const std::shared_ptr<tcp::ITcpSession>& session3) const;
 
-    static std::vector<std::string> readMessagesFromSession(std::shared_ptr<tcp::ITcpSession> session);
+    static std::vector<std::string> readMessagesFromSession(const std::shared_ptr<tcp::ITcpSession>& session);
 
     static std::vector<std::string> processReceivedMessages(const std::shared_ptr<tcp::ITcpSession>& session);
 
     static std::string combineMessages(const std::vector<std::string>& messages);
 
     std::vector<uint16_t> setupNotificationTest(bool useProxies);
-    void executeNotificationRound(std::shared_ptr<tcp::ITcpSession> session1,
-        std::shared_ptr<tcp::ITcpSession> session2,
-        std::shared_ptr<tcp::ITcpSession> session3);
 
-    void verifyCrossClientNotifications(std::shared_ptr<tcp::ITcpSession> session1,
-        std::shared_ptr<tcp::ITcpSession> session2,
-        std::shared_ptr<tcp::ITcpSession> session3);
+    void executeNotificationRound(const std::shared_ptr<tcp::ITcpSession>& session1,
+        const std::shared_ptr<tcp::ITcpSession>& session2,
+        const std::shared_ptr<tcp::ITcpSession>& session3) const;
+
+    void verifyCrossClientNotifications(const std::shared_ptr<tcp::ITcpSession>& session1,
+        const std::shared_ptr<tcp::ITcpSession>& session2,
+        const std::shared_ptr<tcp::ITcpSession>& session3) const;
 
     void logReceivedMessages(const std::vector<std::string>& client1_messages,
         const std::vector<std::string>& client2_messages,

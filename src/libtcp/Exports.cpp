@@ -1,4 +1,5 @@
 #include "client/AceTcpClient.h"
+#include "examples/NotificationHandler.h"
 #include "examples/TcpEchoHandler.h"
 #include "server/AceTcpServer.h"
 
@@ -40,5 +41,9 @@ EXPORTED std::unique_ptr<IBackgroundServer> start_tcp_server(logger::ILogger& lo
 
 EXPORTED std::unique_ptr<ITcpClientHandler> create_tcp_echo_handler(logger::ILogger& logger) {
     return std::make_unique<TcpEchoHandler>(logger);
+}
+
+EXPORTED std::unique_ptr<ITcpClientHandler> create_tcp_notification_handler(logger::ILogger& logger) {
+    return std::make_unique<NotificationHandler>(logger);
 }
 } // namespace tcp

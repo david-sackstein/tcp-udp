@@ -1,5 +1,4 @@
 #include "NotificationTest.h"
-#include "NotificationHandler.h"
 
 #include <liblogger/Exports.h>
 #include <libtcp/Exports.h>
@@ -11,7 +10,6 @@
 #include <common/task/RunningTask.h>
 #include <libtcp/client/ITcpClient.h>
 
-#include <chrono>
 #include <sstream>
 #include <string>
 #include <thread>
@@ -82,16 +80,19 @@ void MultiClientNotificationTest::stopAllServers() {
     client3_.reset();
 }
 
+std::unique_ptr<tcp::ITcpClientHandler> MultiClientNotificationTest::createServerHandler(
+    bool useNotificationHandler) const {
+    if (useNotificationHandler) {
+        return tcp::create_tcp_notification_handler(*logger_);
+    }
+    return tcp::create_tcp_echo_handler(*logger_);
+}
+
 std::vector<uint16_t> MultiClientNotificationTest::setupProxyChain(bool useNotificationHandler) {
     logger_->log(logger::LogLevel::INFO, "Setting up proxy chain: clients -> server_proxies -> %u -> %u",
         TCP_CLIENT_PROXY_PORT, TCP_SERVER_PORT);
 
-    // Create TCP server with appropriate handler
-    if (useNotificationHandler) {
-        notification_handler_ = std::make_unique<NotificationHandler>(*logger_);
-    } else {
-        notification_handler_ = tcp::create_tcp_echo_handler(*logger_);
-    }
+    notification_handler_ = createServerHandler(useNotificationHandler);
     notification_server_ =
         tcp::start_tcp_server(*logger_, Endpoint::loop_back(TCP_SERVER_PORT), *notification_handler_);
 
@@ -115,12 +116,7 @@ std::vector<uint16_t> MultiClientNotificationTest::setupProxyChain(bool useNotif
 std::vector<uint16_t> MultiClientNotificationTest::setupDirectConnection(bool useNotificationHandler) {
     logger_->log(logger::LogLevel::INFO, "Setting up direct connection: clients -> %u", TCP_SERVER_PORT);
 
-    // Create TCP server with appropriate handler
-    if (useNotificationHandler) {
-        notification_handler_ = std::make_unique<NotificationHandler>(*logger_);
-    } else {
-        notification_handler_ = tcp::create_tcp_echo_handler(*logger_);
-    }
+    notification_handler_ = createServerHandler(useNotificationHandler);
     notification_server_ =
         tcp::start_tcp_server(*logger_, Endpoint::loop_back(TCP_SERVER_PORT), *notification_handler_);
 
@@ -229,15 +225,15 @@ std::vector<uint16_t> MultiClientNotificationTest::setupNotificationTest(bool us
     return client_target_ports;
 }
 
-void MultiClientNotificationTest::executeNotificationRound(std::shared_ptr<tcp::ITcpSession> session1,
-    std::shared_ptr<tcp::ITcpSession> session2,
-    std::shared_ptr<tcp::ITcpSession> session3) {
+void MultiClientNotificationTest::executeNotificationRound(const std::shared_ptr<tcp::ITcpSession>& session1,
+    const std::shared_ptr<tcp::ITcpSession>& session2,
+    const std::shared_ptr<tcp::ITcpSession>& session3) const {
     sendMessageRounds(session1, session2, session3);
 }
 
-void MultiClientNotificationTest::verifyCrossClientNotifications(std::shared_ptr<tcp::ITcpSession> session1,
-    std::shared_ptr<tcp::ITcpSession> session2,
-    std::shared_ptr<tcp::ITcpSession> session3) {
+void MultiClientNotificationTest::verifyCrossClientNotifications(const std::shared_ptr<tcp::ITcpSession>& session1,
+    const std::shared_ptr<tcp::ITcpSession>& session2,
+    const std::shared_ptr<tcp::ITcpSession>& session3) const {
     auto [client1_combined, client2_combined, client3_combined] = readAllMessages(session1, session2, session3);
     verifyNotifications(client1_combined, client2_combined, client3_combined);
 }
@@ -302,7 +298,7 @@ void MultiClientNotificationTest::sendMessageRounds(const std::shared_ptr<tcp::I
 }
 
 std::vector<std::string> MultiClientNotificationTest::readMessagesFromSession(
-    std::shared_ptr<tcp::ITcpSession> session) {
+    const std::shared_ptr<tcp::ITcpSession>& session) {
     OwnedBuffer buffer(BUFFER_SIZE);
     std::vector<std::string> messages;
 
@@ -343,7 +339,7 @@ std::string MultiClientNotificationTest::combineMessages(const std::vector<std::
 std::tuple<std::string, std::string, std::string> MultiClientNotificationTest::readAllMessages(
     const std::shared_ptr<tcp::ITcpSession>& session1,
     const std::shared_ptr<tcp::ITcpSession>& session2,
-    const std::shared_ptr<tcp::ITcpSession>& session3) {
+    const std::shared_ptr<tcp::ITcpSession>& session3) const {
     std::vector<std::string> client1_messages, client2_messages, client3_messages;
 
     // Read all messages from both rounds
