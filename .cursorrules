@@ -33,4 +33,26 @@ After every code change, run `make clang-format-fix` to check and fix clang-form
 Apply the Single Responsibility Principle to classes and methods. Each class and method should have one reason to change.
 
 ## Class File Organization
-Every class should be in its own file(s) with the same name. Each class should have its own header (.h) and implementation (.cpp) files. 
+Every class should be in its own file(s) with the same name. Each class should have its own header (.h) and implementation (.cpp) files.
+
+## Function Design
+- Functions should not have side effects - return values instead of assigning as side effects
+- Make two returns without else - use early returns to avoid nesting
+- Reduce nesting in functions - use early continue/return to flatten logic
+- Eliminate else statements - restructure conditions to avoid else branches
+
+## Code Comments
+- Remove redundant comments - only add comments that describe complex logic, not obvious code
+- Don't add comments that just tell what you're doing - comments should explain why, not what
+
+## Code Reuse
+- Generalize and move common code to libraries - extract reusable functionality to appropriate libraries
+
+## Design Patterns
+- Simplify over-engineered designs - prefer simple functions over complex interfaces when appropriate
+- Use maps instead of vectors of pairs - choose appropriate data structures for efficiency
+- Provide arguments directly to functions - avoid unnecessary object creation when simple function calls suffice
+
+## Build System
+- Follow conventions from other apps - use the same patterns for Makefile and CMakeLists.txt as existing applications
+- Use variables and recursive rules - follow the established build system patterns 
