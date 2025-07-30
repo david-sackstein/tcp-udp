@@ -143,6 +143,13 @@ NOTIFIABLE_CLIENT := $(BIN_DIR)/notifiable_client
 $(NOTIFIABLE_CLIENT): $(NOTIFIABLE_CLIENT_APP_OBJS) $(LIBTCP) $(LIBARGSPARSER) $(LIBACETOOLS) $(LIBLOGGER) | $(BIN_DIR)
 	$(CXX) -o $@ $^ $(LDFLAGS) -L$(BIN_DIR) -ltcp -largsparser -lacetools -llogger
 
+# notifying_server executable
+NOTIFYING_SERVER_APP_SRCS := $(shell find src/notifying_server -name '*.cpp')
+NOTIFYING_SERVER_APP_OBJS := $(patsubst src/%.cpp,$(OBJ_DIR)/%.o,$(NOTIFYING_SERVER_APP_SRCS))
+NOTIFYING_SERVER := $(BIN_DIR)/notifying_server
+$(NOTIFYING_SERVER): $(NOTIFYING_SERVER_APP_OBJS) $(LIBTCP) $(LIBARGSPARSER) $(LIBACETOOLS) $(LIBLOGGER) | $(BIN_DIR)
+	$(CXX) -o $@ $^ $(LDFLAGS) -L$(BIN_DIR) -ltcp -largsparser -lacetools -llogger
+
 # tests executable
 TEST_SRCS := $(shell find src/tests -name '*.cpp')
 TEST_OBJS := $(patsubst src/%.cpp,$(OBJ_DIR)/%.o,$(TEST_SRCS))
@@ -193,7 +200,7 @@ compile-commands:
 # ================================
 # Default Target: Build Everything
 all: clang-format-fix $(LIBACETOOLS) $(LIBTCP) $(LIBUDP) $(LIBTCPCLIENTPROXY) $(LIBTCPSERVERPROXY) \
-     $(TCPCLIENT) $(TCP_ECHO_SERVER) $(UDP_ECHO_SERVER) $(TCPCLIENTPROXY) $(TCPSERVERPROXY) $(NOTIFIABLE_CLIENT) $(TESTS)
+     $(TCPCLIENT) $(TCP_ECHO_SERVER) $(UDP_ECHO_SERVER) $(TCPCLIENTPROXY) $(TCPSERVERPROXY) $(NOTIFIABLE_CLIENT) $(NOTIFYING_SERVER) $(TESTS)
 
 # ================================
 # Pattern Rule for Object Files
@@ -208,7 +215,8 @@ $(OBJ_DIR)/%.o: src/%.cpp | $(OBJ_DIR)
           $(LIBTCPCLIENTPROXY_OBJS:.o=.d) $(LIBTCPSERVERPROXY_OBJS:.o=.d) \
           $(LIBARGSPARSER_OBJS:.o=.d) \
           $(TCPCLIENT_APP_OBJS:.o=.d) $(TCP_ECHO_SERVER_APP_OBJS:.o=.d) \
-          $(UDP_ECHO_SERVER_APP_OBJS:.o=.d) $(TCPCLIENTPROXY_APP_OBJS:.o=.d) $(TCPSERVERPROXY_APP_OBJS:.o=.d) $(TEST_OBJS:.o=.d)
+          $(UDP_ECHO_SERVER_APP_OBJS:.o=.d) $(TCPCLIENTPROXY_APP_OBJS:.o=.d) $(TCPSERVERPROXY_APP_OBJS:.o=.d) \
+          $(NOTIFIABLE_CLIENT_APP_OBJS:.o=.d) $(NOTIFYING_SERVER_APP_OBJS:.o=.d) $(TEST_OBJS:.o=.d)
 
 # ================================
 # Test and Utility Rules

@@ -102,6 +102,11 @@ file(GLOB_RECURSE NOTIFIABLE_CLIENT_SOURCES src/notifiable_client/*.cpp)
 add_executable(notifiable_client ${NOTIFIABLE_CLIENT_SOURCES})
 target_link_libraries(notifiable_client PRIVATE libtcp libargsparser libacetools liblogger)
 
+# notifying_server executable
+file(GLOB_RECURSE NOTIFYING_SERVER_SOURCES src/notifying_server/*.cpp)
+add_executable(notifying_server ${NOTIFYING_SERVER_SOURCES})
+target_link_libraries(notifying_server PRIVATE libtcp libargsparser libacetools liblogger)
+
 # Tests executable
 file(GLOB_RECURSE TEST_SOURCES src/tests/*.cpp)
 add_executable(tests ${TEST_SOURCES})
@@ -127,7 +132,7 @@ set_target_properties(
 )
 
 set_target_properties(
-        tcpclient tcp_echo_server udp_echo_server tcpclientproxy tcpserverproxy notifiable_client tests
+        tcpclient tcp_echo_server udp_echo_server tcpclientproxy tcpserverproxy notifiable_client notifying_server tests
         PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin
 )
