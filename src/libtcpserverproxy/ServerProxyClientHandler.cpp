@@ -7,15 +7,16 @@
 #include <common/Endpoint.h>
 #include <libudp/client/IUdpClient.h>
 
-ServerProxyClientHandler::ServerProxyClientHandler(logger::ILogger& logger,
+ServerProxyClientHandler::ServerProxyClientHandler(
+    logger::ILogger &logger,
     Endpoint udp_proxy,
-    udp::IUdpClient& udp_client,
-    ServerProxyUdpHandler* udp_handler)
-    : logger_(logger),
-      udp_handler_(udp_handler),
+    udp::IUdpClient &udp_client,
+    ServerProxyUdpHandler *udp_handler)
+    : udp_handler_(udp_handler),
       session_manager_(std::make_unique<SessionManager>(logger)),
       udp_forwarder_(std::make_unique<UdpForwarder>(logger, std::move(udp_proxy), udp_client)),
-      client_key_manager_(std::make_unique<ClientKeyManager>(logger)) {}
+      client_key_manager_(std::make_unique<ClientKeyManager>(logger)) {
+}
 
 std::unique_ptr<ITask> ServerProxyClientHandler::handle_client(std::unique_ptr<tcp::ITcpSession> client_session) {
     std::string client_key = client_key_manager_->generateClientKey(*client_session);
@@ -26,8 +27,8 @@ std::unique_ptr<ITask> ServerProxyClientHandler::handle_client(std::unique_ptr<t
 
     return session_manager_->createSessionTask(
         shared_session, client_key,
-        [this](tcp::ITcpSession& session, const std::string& key, std::atomic<bool>& cancelled) {
+        [this](tcp::ITcpSession &session, const std::string &key, std::atomic<bool> &cancelled) {
             udp_forwarder_->forwardTcpToUdp(session, key, cancelled);
         },
-        [this](const std::string& key) { udp_handler_->unregister_tcp_session(key); });
+        [this](const std::string &key) { udp_handler_->unregister_tcp_session(key); });
 }

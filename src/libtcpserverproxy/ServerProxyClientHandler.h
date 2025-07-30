@@ -23,7 +23,6 @@ public:
     std::unique_ptr<ITask> handle_client(std::unique_ptr<tcp::ITcpSession> client_session) override;
 
 private:
-    logger::ILogger& logger_;
     ServerProxyUdpHandler* udp_handler_;
     std::unique_ptr<SessionManager> session_manager_;
     std::unique_ptr<UdpForwarder> udp_forwarder_;

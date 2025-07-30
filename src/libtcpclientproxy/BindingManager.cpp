@@ -1,7 +1,7 @@
 #include "BindingManager.h"
 #include "BindingFactory.h"
 
-BindingManager::BindingManager(logger::ILogger& logger) : logger_(logger) {}
+BindingManager::BindingManager(logger::ILogger&) {}
 
 void BindingManager::setBindingFactory(std::unique_ptr<BindingFactory> factory) {
     factory_ = std::move(factory);

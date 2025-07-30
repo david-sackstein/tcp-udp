@@ -24,7 +24,6 @@ public:
     bool hasBinding(const std::string& source_key) const;
 
 private:
-    logger::ILogger& logger_;
     BindingMap bindings_;
     std::unique_ptr<BindingFactory> factory_;
 };

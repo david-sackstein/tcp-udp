@@ -162,13 +162,13 @@ clang-format:
 clang-format-fix:
 	@./scripts/clang/apply_formatting.sh
 
-# Clang-tidy target (using compile database)
-clang-tidy:
-	@./scripts/clang/run_clang_tidy_with_compile_db.sh
+CLANG_TIDY_SCRIPT := ./scripts/clang/run_clang_tidy.sh
 
-# Clang-tidy with fixes target
+clang-tidy:
+	$(CLANG_TIDY_SCRIPT) --no-fix
+
 clang-tidy-fix:
-	@./scripts/clang/run_clang_tidy_with_compile_db.sh
+	$(CLANG_TIDY_SCRIPT) --fix
 
 # ================================
 # Compile Database Management
@@ -185,8 +185,6 @@ compile-commands:
 # Default Target: Build Everything
 all: clang-format-fix $(LIBACETOOLS) $(LIBTCP) $(LIBUDP) $(LIBTCPCLIENTPROXY) $(LIBTCPSERVERPROXY) \
      $(TCPCLIENT) $(TCP_ECHO_SERVER) $(UDP_ECHO_SERVER) $(TCPCLIENTPROXY) $(TCPSERVERPROXY) $(TESTS)
-
-
 
 # ================================
 # Pattern Rule for Object Files
