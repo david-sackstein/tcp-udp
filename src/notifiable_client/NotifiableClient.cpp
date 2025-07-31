@@ -8,31 +8,33 @@
 #include <iostream>
 #include <thread>
 
-NotifiableClient::NotifiableClient(logger::ILogger& logger) : logger_(logger) {}
+NotifiableClient::NotifiableClient(logger::ILogger& validation_logger, logger::ILogger& communication_logger)
+    : validation_logger_(validation_logger), communication_logger_(communication_logger) {}
 
 NotifiableClient::~NotifiableClient() {
     stop();
 }
 
 bool NotifiableClient::connect(const std::string& endpoint) {
-    client_ = tcp::create_tcp_client(logger_);
+    client_ = tcp::create_tcp_client(communication_logger_);
     if (!client_) {
-        logger_.log(logger::LogLevel::ERROR, "Failed to create client");
+        communication_logger_.log(logger::LogLevel::ERROR, "Failed to create client");
         return false;
     }
 
     Endpoint ep = Endpoint::from_string(endpoint);
     session_ = client_->connect(Endpoint::any_loop_back(), ep);
     if (!session_) {
-        logger_.log(logger::LogLevel::ERROR, "Failed to connect to server");
+        communication_logger_.log(logger::LogLevel::ERROR, "Failed to connect to server");
         return false;
     }
 
-    logger_.log(logger::LogLevel::INFO, "Connected to server successfully");
+    communication_logger_.log(logger::LogLevel::INFO, "Connected to server successfully");
     return true;
 }
 
 void NotifiableClient::start(const NotifiableClientArgs& args) {
+    current_client_id_ = args.get_client_id(); // Store the client ID for validation
     running_ = true;
 
     // Start receiver thread
@@ -143,33 +145,34 @@ bool NotifiableClient::parse_notification(const std::string& notification,
 }
 
 void NotifiableClient::validate_echo_response(const std::string& response,
-    const std::string& client_id,
-    int sequence_number) {
+    const std::string& expected_client_id,
+    int expected_sequence_number) {
     std::string response_client_id;
     int response_sequence_number;
     std::string response_message;
 
     if (!parse_echo_response(response, response_client_id, response_sequence_number, response_message)) {
-        logger_.log(logger::LogLevel::ERROR, "VALIDATION ERROR: Failed to parse echo response: %s", response.c_str());
+        validation_logger_.log(
+            logger::LogLevel::ERROR, "VALIDATION ERROR: Failed to parse echo response: %s", response.c_str());
         return;
     }
 
-    if (response_client_id != client_id) {
-        logger_.log(logger::LogLevel::ERROR,
-            "VALIDATION ERROR: Echo response client ID mismatch. Expected: %s, Got: %s", client_id.c_str(),
+    if (response_client_id != expected_client_id) {
+        validation_logger_.log(logger::LogLevel::ERROR,
+            "VALIDATION ERROR: Echo response client ID mismatch. Expected: %s, Got: %s", expected_client_id.c_str(),
             response_client_id.c_str());
         return;
     }
 
-    if (response_sequence_number != sequence_number) {
-        logger_.log(logger::LogLevel::ERROR,
-            "VALIDATION ERROR: Echo response sequence number mismatch. Expected: %d, Got: %d", sequence_number,
+    if (response_sequence_number != expected_sequence_number) {
+        validation_logger_.log(logger::LogLevel::ERROR,
+            "VALIDATION ERROR: Echo response sequence number mismatch. Expected: %d, Got: %d", expected_sequence_number,
             response_sequence_number);
         return;
     }
 
-    logger_.log(logger::LogLevel::INFO, "VALIDATION SUCCESS: Echo response validated for client %s, sequence %d",
-        client_id.c_str(), sequence_number);
+    validation_logger_.log(logger::LogLevel::INFO, "VALIDATION SUCCESS: Echo response validated for %s, sequence %d",
+        expected_client_id.c_str(), expected_sequence_number);
 }
 
 void NotifiableClient::validate_notification(const std::string& notification) {
@@ -178,7 +181,7 @@ void NotifiableClient::validate_notification(const std::string& notification) {
     std::string message;
 
     if (!parse_notification(notification, client_id, sequence_number, message)) {
-        logger_.log(
+        validation_logger_.log(
             logger::LogLevel::ERROR, "VALIDATION ERROR: Failed to parse notification: %s", notification.c_str());
         return;
     }
@@ -189,18 +192,18 @@ void NotifiableClient::validate_notification(const std::string& notification) {
     if (it == client_sequence_numbers_.end()) {
         // First notification from this client, record the sequence number
         client_sequence_numbers_[client_id] = sequence_number;
-        logger_.log(logger::LogLevel::INFO, "VALIDATION INFO: First notification from client %s, sequence %d",
+        validation_logger_.log(logger::LogLevel::INFO, "VALIDATION INFO: First notification from %s, sequence %d",
             client_id.c_str(), sequence_number);
     } else {
         // Verify sequence number is increasing
         int expected_sequence = it->second + 1;
         if (sequence_number != expected_sequence) {
-            logger_.log(logger::LogLevel::ERROR,
-                "VALIDATION ERROR: Notification sequence number mismatch for client %s. Expected: %d, Got: %d",
+            validation_logger_.log(logger::LogLevel::ERROR,
+                "VALIDATION ERROR: Notification sequence number mismatch for %s. Expected: %d, Got: %d",
                 client_id.c_str(), expected_sequence, sequence_number);
         } else {
-            logger_.log(logger::LogLevel::INFO,
-                "VALIDATION SUCCESS: Notification sequence validated for client %s, sequence %d", client_id.c_str(),
+            validation_logger_.log(logger::LogLevel::INFO,
+                "VALIDATION SUCCESS: Notification sequence validated for %s, sequence %d", client_id.c_str(),
                 sequence_number);
         }
         it->second = sequence_number;
@@ -218,11 +221,12 @@ void NotifiableClient::sender_loop(const NotifiableClientArgs& args) {
 
         auto result = session_->write(ConstBuffer(message.data(), message.size()), block);
         if (result.code != IOResultCode::Success) {
-            logger_.log(logger::LogLevel::ERROR, "Failed to send message: %s", result.error_message.c_str());
+            communication_logger_.log(
+                logger::LogLevel::ERROR, "Failed to send message: %s", result.error_message.c_str());
             break;
         }
 
-        logger_.log(logger::LogLevel::INFO, "Sent: %s", message.c_str());
+        communication_logger_.log(logger::LogLevel::INFO, "Sent: %s", message.c_str());
 
         std::this_thread::sleep_for(std::chrono::milliseconds(args.get_request_interval_ms()));
     }
@@ -236,16 +240,17 @@ void NotifiableClient::receiver_loop() {
 
         if (result.code == IOResultCode::Success && result.count > 0) {
             std::string response(buffer.view().data, result.count);
-            logger_.log(logger::LogLevel::INFO, "Received: %s", response.c_str());
+            communication_logger_.log(logger::LogLevel::INFO, "Received: %s", response.c_str());
 
             // Validate the response
             if (response.substr(0, 5) == "echo ") {
                 // This is an echo response to our request
-                std::string client_id;
-                int sequence_number;
-                std::string message;
-                if (parse_echo_response(response, client_id, sequence_number, message)) {
-                    validate_echo_response(response, client_id, sequence_number);
+                std::string response_client_id;
+                int response_sequence_number;
+                std::string response_message;
+                if (parse_echo_response(response, response_client_id, response_sequence_number, response_message)) {
+                    // Validate that the echo response matches what we sent
+                    validate_echo_response(response, current_client_id_, response_sequence_number);
                 }
             } else if (response.substr(0, 7) == "notify ") {
                 // This is a notification about another client's request
@@ -255,7 +260,7 @@ void NotifiableClient::receiver_loop() {
         }
 
         if (result.code == IOResultCode::ConnectionClosed) {
-            logger_.log(logger::LogLevel::INFO, "Server disconnected");
+            communication_logger_.log(logger::LogLevel::INFO, "Server disconnected");
             break;
         }
     }

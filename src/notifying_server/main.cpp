@@ -3,7 +3,12 @@
 #include <libtcp/Exports.h>
 
 int main(int argc, char* argv[]) {
-    auto logger = logger::create_console_logger(logger::LogLevel::INFO);
+    // Check for --verbose flag first
+    std::string verbose_value = get_flag_value(argc, argv, "--verbose", "false");
+    bool verbose = (verbose_value == "true" || verbose_value == "1");
+
+    // Create logger with appropriate level based on verbose flag
+    auto logger = logger::create_console_logger(verbose ? logger::LogLevel::INFO : logger::LogLevel::ERROR);
 
     const auto& local_addresses = tcp::get_local_ipv4_addresses();
 

@@ -236,6 +236,21 @@ cleanup() {
 trap cleanup EXIT
 
 # =============================================================================
+# VERBOSE FLAG HANDLING
+# =============================================================================
+VERBOSE_FLAG=""
+for arg in "$@"; do
+    if [[ "$arg" == "--verbose" ]]; then
+        VERBOSE_FLAG="--verbose"
+        print_status "Verbose mode enabled - showing all server/proxy logs"
+        break
+    fi
+done
+if [[ -z "$VERBOSE_FLAG" ]]; then
+    print_status "Non-verbose mode - showing only client validation logs and server errors"
+fi
+
+# =============================================================================
 # EXECUTABLE VALIDATION
 # =============================================================================
 
@@ -294,33 +309,33 @@ print_header "STARTING DISTRIBUTED NOTIFICATION SYSTEM"
 print_subheader "Step 1: Starting Notifying Server"
 print_status "Starting Notifying Server on port $NOTIFYING_SERVER_PORT..."
 print_status "This server will receive requests from all clients and send notifications to all connected clients"
-./bin/notifying_server 127.0.0.1:$NOTIFYING_SERVER_PORT &
+./bin/notifying_server 127.0.0.1:$NOTIFYING_SERVER_PORT $VERBOSE_FLAG &
 NOTIFYING_SERVER_PID=$!
 wait_for_service $NOTIFYING_SERVER_PORT "Notifying Server"
 
 print_subheader "Step 2: Starting TCP Client Proxy"
 print_status "Starting TCP Client Proxy on port $TCP_CLIENT_PROXY_PORT..."
 print_status "TCP Client Proxy forwards connections to Notifying Server on port $NOTIFYING_SERVER_PORT"
-./bin/tcpclientproxy 127.0.0.1:$TCP_CLIENT_PROXY_PORT 127.0.0.1:$NOTIFYING_SERVER_PORT &
+./bin/tcpclientproxy 127.0.0.1:$TCP_CLIENT_PROXY_PORT 127.0.0.1:$NOTIFYING_SERVER_PORT $VERBOSE_FLAG &
 TCP_CLIENT_PROXY_PID=$!
 wait_for_udp_service $TCP_CLIENT_PROXY_PORT "TCP Client Proxy"
 
 print_subheader "Step 3: Starting TCP Server Proxies"
 print_status "Starting TCP Server Proxy 1 on port $TCP_SERVER_PROXY1_PORT..."
 print_status "TCP Server Proxy 1 forwards to TCP Client Proxy on port $TCP_CLIENT_PROXY_PORT"
-./bin/tcpserverproxy 127.0.0.1:$TCP_SERVER_PROXY1_PORT 127.0.0.1:$TCP_CLIENT_PROXY_PORT &
+./bin/tcpserverproxy 127.0.0.1:$TCP_SERVER_PROXY1_PORT 127.0.0.1:$TCP_CLIENT_PROXY_PORT $VERBOSE_FLAG &
 TCP_SERVER_PROXY1_PID=$!
 wait_for_service $TCP_SERVER_PROXY1_PORT "TCP Server Proxy 1"
 
 print_status "Starting TCP Server Proxy 2 on port $TCP_SERVER_PROXY2_PORT..."
 print_status "TCP Server Proxy 2 forwards to TCP Client Proxy on port $TCP_CLIENT_PROXY_PORT"
-./bin/tcpserverproxy 127.0.0.1:$TCP_SERVER_PROXY2_PORT 127.0.0.1:$TCP_CLIENT_PROXY_PORT &
+./bin/tcpserverproxy 127.0.0.1:$TCP_SERVER_PROXY2_PORT 127.0.0.1:$TCP_CLIENT_PROXY_PORT $VERBOSE_FLAG &
 TCP_SERVER_PROXY2_PID=$!
 wait_for_service $TCP_SERVER_PROXY2_PORT "TCP Server Proxy 2"
 
 print_status "Starting TCP Server Proxy 3 on port $TCP_SERVER_PROXY3_PORT..."
 print_status "TCP Server Proxy 3 forwards to TCP Client Proxy on port $TCP_CLIENT_PROXY_PORT"
-./bin/tcpserverproxy 127.0.0.1:$TCP_SERVER_PROXY3_PORT 127.0.0.1:$TCP_CLIENT_PROXY_PORT &
+./bin/tcpserverproxy 127.0.0.1:$TCP_SERVER_PROXY3_PORT 127.0.0.1:$TCP_CLIENT_PROXY_PORT $VERBOSE_FLAG &
 TCP_SERVER_PROXY3_PID=$!
 wait_for_service $TCP_SERVER_PROXY3_PORT "TCP Server Proxy 3"
 
@@ -328,19 +343,19 @@ print_subheader "Step 4: Starting Notifiable Clients"
 print_status "Starting Notifiable Client 1 (ID: $CLIENT1_ID)..."
 print_status "Client 1 connects to TCP Server Proxy 1 on port $TCP_SERVER_PROXY1_PORT"
 print_status "Client 1 will send requests every ${REQUEST_INTERVAL_MS}ms"
-./bin/notifiable_client 127.0.0.1:$TCP_SERVER_PROXY1_PORT --client-id $CLIENT1_ID --interval $REQUEST_INTERVAL_MS &
+./bin/notifiable_client 127.0.0.1:$TCP_SERVER_PROXY1_PORT --client-id $CLIENT1_ID --interval $REQUEST_INTERVAL_MS $VERBOSE_FLAG &
 CLIENT1_PID=$!
 
 print_status "Starting Notifiable Client 2 (ID: $CLIENT2_ID)..."
 print_status "Client 2 connects to TCP Server Proxy 2 on port $TCP_SERVER_PROXY2_PORT"
 print_status "Client 2 will send requests every ${REQUEST_INTERVAL_MS}ms"
-./bin/notifiable_client 127.0.0.1:$TCP_SERVER_PROXY2_PORT --client-id $CLIENT2_ID --interval $REQUEST_INTERVAL_MS &
+./bin/notifiable_client 127.0.0.1:$TCP_SERVER_PROXY2_PORT --client-id $CLIENT2_ID --interval $REQUEST_INTERVAL_MS $VERBOSE_FLAG &
 CLIENT2_PID=$!
 
 print_status "Starting Notifiable Client 3 (ID: $CLIENT3_ID)..."
 print_status "Client 3 connects to TCP Server Proxy 3 on port $TCP_SERVER_PROXY3_PORT"
 print_status "Client 3 will send requests every ${REQUEST_INTERVAL_MS}ms"
-./bin/notifiable_client 127.0.0.1:$TCP_SERVER_PROXY3_PORT --client-id $CLIENT3_ID --interval $REQUEST_INTERVAL_MS &
+./bin/notifiable_client 127.0.0.1:$TCP_SERVER_PROXY3_PORT --client-id $CLIENT3_ID --interval $REQUEST_INTERVAL_MS $VERBOSE_FLAG &
 CLIENT3_PID=$!
 
 # =============================================================================
