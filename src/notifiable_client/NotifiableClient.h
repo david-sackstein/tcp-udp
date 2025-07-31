@@ -24,7 +24,6 @@ private:
     void sender_loop(const NotifiableClientArgs& args);
     void receiver_loop();
 
-    // Validation methods
     void validate_echo_response(const std::string& response,
         const std::string& expected_client_id,
         int expected_sequence_number);
@@ -39,17 +38,24 @@ private:
         int& sequence_number,
         std::string& message);
 
-    logger::ILogger& validation_logger_;    // Always verbose for validation messages
-    logger::ILogger& communication_logger_; // Depends on verbose flag for communication logs
+    bool parse_inner_content(const std::string& inner_content,
+        std::string& client_id,
+        int& sequence_number,
+        std::string& message);
+    void handle_echo_response(const std::string& response);
+    void handle_notification_response(const std::string& response);
+    void process_response(const std::string& response);
+
+    logger::ILogger& validation_logger_;
+    logger::ILogger& communication_logger_;
     std::unique_ptr<tcp::ITcpClient> client_;
     std::shared_ptr<tcp::ITcpSession> session_;
     std::atomic<bool> running_{false};
     std::thread sender_thread_;
     std::thread receiver_thread_;
 
-    // Validation tracking
-    std::map<std::string, int> client_sequence_numbers_; // Track last seen sequence number per client
+    std::map<std::string, int> client_sequence_numbers_;
     std::mutex validation_mutex_;
     int current_sequence_number_{0};
-    std::string current_client_id_; // Track the current client's ID for validation
+    std::string current_client_id_;
 };

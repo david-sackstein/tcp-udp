@@ -387,9 +387,10 @@ echo "└───────────────────────�
 echo
 
 print_subheader "System Behavior:"
-echo "• Each tcp client sends requests with its ID every ${REQUEST_INTERVAL_MS}ms"
-echo "• The tcp server responds to each request and sends notifications to all other clients"
-echo "• All communication flows through the proxy chain for tunneling over udp"
+echo "• Each client sends requests with its ID every ${REQUEST_INTERVAL_MS}ms"
+echo "• The server responds to each request and sends notifications to all other clients"
+echo "• All communication flows through the proxy chain for tunneling over UDP"
+echo "• Clients validate echo responses and notification sequences"
 echo
 
 print_subheader "Expected Behavior:"
@@ -397,6 +398,7 @@ echo "• Client 1 sends requests → Server responds → Clients 2 & 3 receive 
 echo "• Client 2 sends requests → Server responds → Clients 1 & 3 receive notifications"
 echo "• Client 3 sends requests → Server responds → Clients 1 & 2 receive notifications"
 echo "• This creates a distributed notification system where all clients are aware of each other's activity"
+echo "• Validation logs show successful echo responses and notification sequence tracking"
 echo
 
 # =============================================================================

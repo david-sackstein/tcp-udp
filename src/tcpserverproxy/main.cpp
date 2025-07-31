@@ -4,11 +4,9 @@
 #include <iostream>
 
 int main(int argc, char* argv[]) {
-    // Check for --verbose flag first
     std::string verbose_value = get_flag_value(argc, argv, "--verbose", "false");
     bool verbose = (verbose_value == "true" || verbose_value == "1");
 
-    // Create logger with appropriate level based on verbose flag
     auto logger = logger::create_console_logger(verbose ? logger::LogLevel::INFO : logger::LogLevel::ERROR);
 
     const auto& local_addresses = server_proxy::get_local_ipv4_addresses();
@@ -16,7 +14,6 @@ int main(int argc, char* argv[]) {
     auto endpoint_strings = get_endpoint_configuration(argc, argv, local_addresses);
     std::string listen_endpoint_str = endpoint_strings.first;
 
-    // Port cleanup
     if (!check_and_cleanup_port(*logger, listen_endpoint_str)) {
         logger->log(logger::LogLevel::ERROR, "Port cleanup failed. Exiting.");
         return 1;
