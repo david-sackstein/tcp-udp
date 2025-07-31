@@ -46,7 +46,7 @@ std::string get_flag_value(int argc, char* argv[], const std::string& flag_name,
     return default_value;
 }
 
-bool check_and_cleanup_port(logger::ILogger& logger, const std::string& endpoint, bool force) {
+bool check_and_cleanup_port(logger::ILogger& logger, const std::string& endpoint) {
     argsparser::PortCleanup port_cleanup(logger);
-    return port_cleanup.check_and_cleanup_port(endpoint, force);
+    return port_cleanup.check_and_cleanup_port(endpoint);
 }

@@ -371,10 +371,9 @@ echo "└─────────────────────┘     
 echo
 
 print_subheader "System Behavior:"
-echo "• Each client sends requests with its ID every ${REQUEST_INTERVAL_MS}ms"
-echo "• The server responds to each request and sends notifications to all other clients"
-echo "• All communication flows through the proxy chain for load distribution"
-echo "• The --force flag was used to automatically kill any existing processes on the ports"
+echo "• Each tcp client sends requests with its ID every ${REQUEST_INTERVAL_MS}ms"
+echo "• The tcp server responds to each request and sends notifications to all other clients"
+echo "• All communication flows through the proxy chain for tunneling over udp"
 echo
 
 print_subheader "Monitoring Options:"

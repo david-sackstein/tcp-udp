@@ -12,12 +12,8 @@ int main(int argc, char* argv[]) {
     auto endpoint_strings = get_endpoint_configuration(argc, argv, local_addresses);
     std::string listen_endpoint_str = endpoint_strings.first;
 
-    // Get --force flag value
-    std::string force_flag = get_flag_value(argc, argv, "--force", "false");
-    bool force = (force_flag == "true");
-
     // Port cleanup
-    if (!check_and_cleanup_port(*logger, listen_endpoint_str, force)) {
+    if (!check_and_cleanup_port(*logger, listen_endpoint_str)) {
         logger->log(logger::LogLevel::ERROR, "Port cleanup failed. Exiting.");
         return 1;
     }

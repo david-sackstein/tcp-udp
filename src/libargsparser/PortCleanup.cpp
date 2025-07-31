@@ -7,10 +7,11 @@
 #include <iostream>
 
 namespace argsparser {
+constexpr bool force = true;
 
 PortCleanup::PortCleanup(logger::ILogger& logger) : logger_(logger) {}
 
-bool PortCleanup::check_and_cleanup_port(const std::string& endpoint, bool force) {
+bool PortCleanup::check_and_cleanup_port(const std::string& endpoint) {
     Endpoint ep = Endpoint::from_string(endpoint);
     int port = ep.port;
 

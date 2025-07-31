@@ -28,4 +28,4 @@ EXPORTED std::string get_flag_value(int argc,
     const std::string& flag_name,
     const std::string& default_value = "");
 
-EXPORTED bool check_and_cleanup_port(logger::ILogger& logger, const std::string& endpoint, bool force = false);
+EXPORTED bool check_and_cleanup_port(logger::ILogger& logger, const std::string& endpoint);

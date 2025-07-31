@@ -8,7 +8,7 @@ namespace argsparser {
 class PortCleanup {
 public:
     explicit PortCleanup(logger::ILogger& logger);
-    bool check_and_cleanup_port(const std::string& endpoint, bool force = false);
+    bool check_and_cleanup_port(const std::string& endpoint);
 
 private:
     bool is_port_in_use(int port);
