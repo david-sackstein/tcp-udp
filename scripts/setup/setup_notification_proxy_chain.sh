@@ -17,13 +17,13 @@
 # └─────────────────┘                            │                 │
 # ┌─────────────────┐    ┌──────────────────┐    │                 │    ┌─────────────────┐
 # │ Notifiable      │───▶│ Client Proxy 2   │───▶│  Server Proxy   │───▶│  Notifying      │
-# │ Client 2        │    │ (Port: 16003)    │    │ (Port: 16005)   │    │  Server         │
-# │ (Port: 16002)   │    └──────────────────┘    │                 │    │ (Port: 16006)   │
+# │ Client 2        │    │ (Port: 16003)    │    │ (Port: 17000)   │    │  Server         │
+# │ (Port: 16002)   │    └──────────────────┘    │                 │    │ (Port: 17001)   │
 # └─────────────────┘                            │                 │    └─────────────────┘
 # ┌─────────────────┐    ┌──────────────────┐    │                 │
 # │ Notifiable      │───▶│ Client Proxy 3   │───▶│                 │
-# │ Client 3        │    │ (Port: 16004)    │    │                 │
-# │ (Port: 16007)   │    └──────────────────┘    │                 │
+# │ Client 3        │    │ (Port: 16005)    │    │                 │
+# │ (Port: 16004)   │    └──────────────────┘    │                 │
 # └─────────────────┘                            └─────────────────┘
 #
 # Each client sends requests with its ID every second and receives
@@ -51,24 +51,24 @@ NC='\033[0m' # No Color
 # Each notifiable client runs on its own port
 NOTIFIABLE_CLIENT1_PORT=16000
 NOTIFIABLE_CLIENT2_PORT=16002
-NOTIFIABLE_CLIENT3_PORT=16007
-
-# TCP Client Proxy Port
-# The TCP client proxy receives connections from all TCP server proxies
-# and forwards to the notifying server
-TCP_CLIENT_PROXY_PORT=16001
+NOTIFIABLE_CLIENT3_PORT=16004
 
 # TCP Server Proxy Ports
 # Each TCP server proxy listens for connections from its assigned client
 # and forwards to the TCP client proxy
-TCP_SERVER_PROXY1_PORT=16003
-TCP_SERVER_PROXY2_PORT=16004
-TCP_SERVER_PROXY3_PORT=16005
+TCP_SERVER_PROXY1_PORT=16001
+TCP_SERVER_PROXY2_PORT=16003
+TCP_SERVER_PROXY3_PORT=16004
+
+# TCP Client Proxy Port
+# The TCP client proxy receives connections from all TCP server proxies
+# and forwards to the notifying server
+TCP_CLIENT_PROXY_PORT=17000
 
 # Notifying Server Port
 # The notifying server receives all requests and sends notifications
 # to all connected clients
-NOTIFYING_SERVER_PORT=16006
+NOTIFYING_SERVER_PORT=17001
 
 # =============================================================================
 # CLIENT ID CONSTANTS
@@ -357,17 +357,17 @@ echo
 echo "┌────────────────────────────┐    ┌─────────────────────────┐    ┌──────────────────────┐"
 echo "│ Notifiable Client 1        │───▶│                         │───▶│                      │"
 echo "│ ID: client1                │    │ TCP Server Proxy 1      │    │                      │"
-echo "│ Port: 16000                │    │ Port: 16003             │    │                      │"
+echo "│ Port: 16000                │    │ Port: 16001             │    │                      │"
 echo "└────────────────────────────┘    └─────────────────────────┘    │                      │"
 echo "┌────────────────────────────┐    ┌─────────────────────────┐    │                      │    ┌────────────────────┐"
 echo "│ Notifiable Client 2        │───▶│                         │───▶│  TCP Client Proxy    │───▶│  Notifying Server  │"
-echo "│ ID: client2                │    │ TCP Server Proxy 2      │    │  Port: 16001         │    │ Port: 16006        │"
-echo "│ Port: 16002                │    │ Port: 16004             │    │                      │    └────────────────────┘"
+echo "│ ID: client2                │    │ TCP Server Proxy 2      │    │  Port: 17000         │    │  Port: 17001       │"
+echo "│ Port: 16002                │    │ Port: 16003             │    │                      │    └────────────────────┘"
 echo "└────────────────────────────┘    └─────────────────────────┘    │                      │"
 echo "┌────────────────────────────┐    ┌─────────────────────────┐    │                      │"
 echo "│ Notifiable Client 3        │───▶│                         │───▶│                      │"
 echo "│ ID: client3                │    │ TCP Server Proxy 3      │    │                      │"
-echo "│ Port: 16007                │    │ Port: 16005             │    │                      │"
+echo "│ Port: 16004                │    │ Port: 16005             │    │                      │"
 echo "└────────────────────────────┘    └─────────────────────────┘    └──────────────────────┘"
 echo
 
