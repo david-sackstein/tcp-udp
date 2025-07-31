@@ -19,6 +19,12 @@ private:
     static constexpr size_t BUFFER_SIZE = 1024;
     static constexpr auto TIMEOUT_MS = std::chrono::milliseconds{100};
 
+    void process_message(const std::string& message, const std::shared_ptr<tcp::ITcpSession>& sender_session);
+    void send_echo_response(const std::string& message, const std::shared_ptr<tcp::ITcpSession>& sender_session) const;
+    void send_notifications_to_others(const std::string& message,
+        const std::shared_ptr<tcp::ITcpSession>& sender_session);
+    void remove_session(const std::shared_ptr<tcp::ITcpSession>& session);
+
     logger::ILogger& logger_;
     std::vector<std::shared_ptr<tcp::ITcpSession>> active_sessions_;
     std::mutex sessions_mutex_;

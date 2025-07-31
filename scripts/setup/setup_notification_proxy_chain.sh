@@ -80,7 +80,7 @@ CLIENT3_ID="client3"
 # =============================================================================
 # REQUEST INTERVAL CONSTANTS
 # =============================================================================
-REQUEST_INTERVAL_MS=1000  # 1 second between requests
+REQUEST_INTERVAL_MS=100  # 100ms between requests for high load testing
 
 # =============================================================================
 # OUTPUT FUNCTIONS
