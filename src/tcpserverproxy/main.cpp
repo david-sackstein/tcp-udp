@@ -2,7 +2,6 @@
 #include <liblogger/Exports.h>
 #include <libtcpserverproxy/Exports.h>
 #include <iostream>
-#include <vector>
 
 int main(int argc, char* argv[]) {
     auto logger = logger::create_console_logger(logger::LogLevel::ERROR);
